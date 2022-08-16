@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.SqlClient;
+using AccountyMinAPI.Data;
 using Dapper;
 
 namespace AccountyMinAPI.DB
@@ -14,22 +15,29 @@ namespace AccountyMinAPI.DB
         }
 
         public async Task<IEnumerable<T>> LoadData<T, U>(
-            string storedProcedure,
+            CommandType commandType,
+            string storedProcedureOrQuery,
             U parameters,
             string connectionId = "Default")
         {
             // "using" keyword for closing connection after reaching end of scope
             using IDbConnection connection = new SqlConnection(_config.GetConnectionString(connectionId));
-            return await connection.QueryAsync<T>(storedProcedure, parameters, commandType: CommandType.StoredProcedure);
+            var rows = await connection.QueryAsync<T>(storedProcedureOrQuery, parameters, commandType: commandType);
+            if (rows.Count() == 0)
+                throw new NotFoundException();
+            return rows;
         }
 
         public async Task SaveData<T>(
-            string storedProcedure,
+            CommandType commandType,
+            string storedProcedureOrQuery,
             T parameters,
             string connectionId = "Default")
         {
             using IDbConnection connection = new SqlConnection(_config.GetConnectionString(connectionId));
-            await connection.ExecuteAsync(storedProcedure, parameters, commandType: CommandType.StoredProcedure);
+            var result = await connection.ExecuteAsync(storedProcedureOrQuery, parameters, commandType: commandType);
+            if (result == 0)
+                throw new NotFoundException();
         }
     }
 }

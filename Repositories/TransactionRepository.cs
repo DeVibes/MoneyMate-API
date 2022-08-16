@@ -1,30 +1,72 @@
+using System.Data;
 using AccountyMinAPI.DB;
-using AccountyMinAPI.Models;
+namespace AccountyMinAPI.Repositories;
 
-namespace AccountyMinAPI.Repositories
+public class TransactionRepository : ITransactionRepository
 {
-    public class TransactionRepository : ITransactionRepository
+    private readonly ISqlDataAccess _db;
+    private readonly ILoggerFactory _logger;
+
+    public TransactionRepository(ISqlDataAccess db, ILoggerFactory logger)
     {
-        private readonly ISqlDataAccess _db;
+        _db = db;
+        _logger = logger;
+    }
 
-        public TransactionRepository(ISqlDataAccess db)
+    public async Task<IEnumerable<TransactionModel>> GetAllTransactions() 
+    {
+        var results = await _db.LoadData<TransactionModel, dynamic>(CommandType.StoredProcedure, "dbo.spTransactions_GetAll", new { });
+        return results;
+    }
+
+    public async Task<TransactionModel?> GetTransactionById(int id) 
+    {
+        var result = await _db.LoadData<TransactionModel, dynamic>(CommandType.StoredProcedure, "dbo.spTransactions_Get", new { Id = id });
+        return result.FirstOrDefault();
+    }
+
+    public async Task InsertTransaction(TransactionModel transaction) =>
+        await _db.SaveData(CommandType.StoredProcedure, "dbo.spTransactions_Insert", new 
         {
-            _db = db;
-        }
+            transaction.CategoryId,
+            transaction.Date,
+            transaction.Description,
+            transaction.Seen,
+            transaction.PaymentTypeId,
+            transaction.Price,
+            transaction.Store
+        });
 
-        public Task<IEnumerable<TransactionModel>> GetAllTransactions() =>
-            _db.LoadData<TransactionModel, dynamic>("dbo.spTransactions_GetAll", new { });
+    public async Task DeleteTransactionById(int id) =>
+        await _db.SaveData(CommandType.StoredProcedure, "dbo.spTransactions_Delete", new { Id = id });
 
-        public async Task InsertTransaction(TransactionModel transaction) =>
-            await _db.SaveData("dbo.spTransactions_Insert", new 
-            {
-                transaction.CategoryId,
-                Date = transaction.Date.ToString("o"),
-                transaction.Description,
-                transaction.Seen,
-                transaction.PaymentTypeId,
-                transaction.Price,
-                transaction.Store
-            });
+    public async Task UpdateTransactionById(int id, TransactionModel transaction)
+    {
+        await _db.SaveData(CommandType.StoredProcedure, "dbo.spTransactions_Update", new 
+        {
+            Id = id,
+            transaction.CategoryId,
+            transaction.Date,
+            transaction.Description,
+            transaction.Seen,
+            transaction.PaymentTypeId,
+            transaction.Price,
+            transaction.Store
+        });
+    }
+
+    public async Task PatchTransaction(int id, TransactionModel transaction)
+    {
+        await _db.SaveData(CommandType.StoredProcedure, "dbo.spTransactions_Patch", new
+        {
+            Id = id,
+            transaction.CategoryId,
+            transaction.Date,
+            transaction.Description,
+            transaction.Seen,
+            transaction.PaymentTypeId,
+            transaction.Price,
+            transaction.Store
+        });
     }
 }
