@@ -112,6 +112,10 @@ public static class TransactionsAPI
             else
                 return Results.BadRequest(mappingResult.Item2);
         }
+        catch (NotFoundException)
+        {
+            return Results.NotFound($"ID - {id} was not found");
+        }
         catch (System.Exception ex)
         {
             return Results.Problem(ex.Message);
