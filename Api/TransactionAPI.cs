@@ -38,6 +38,10 @@ public static class TransactionsAPI
             var mappingResult = TransactionModel.ToTransactionReadDto(transaction, out TransactionReadDto dto);
             return Results.Ok(dto);
         }
+        catch (NotFoundException)
+        {
+            return Results.NotFound($"ID - {id} was not found");
+        }
         catch (System.Exception ex)
         {
             return Results.Problem(ex.Message);

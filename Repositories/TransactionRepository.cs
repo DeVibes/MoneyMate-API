@@ -19,7 +19,7 @@ public class TransactionRepository : ITransactionRepository
         return results;
     }
 
-    public async Task<TransactionModel?> GetTransactionById(int id) 
+    public async Task<TransactionModel> GetTransactionById(int id) 
     {
         var result = await _db.LoadData<TransactionModel, dynamic>(CommandType.StoredProcedure, "dbo.spTransactions_Get", new { Id = id });
         return result.FirstOrDefault();
