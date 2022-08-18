@@ -13,9 +13,10 @@ public class TransactionRepository : ITransactionRepository
         _logger = logger;
     }
 
-    public async Task<IEnumerable<TransactionModel>> GetAllTransactions() 
+    public async Task<IEnumerable<TransactionModel>> GetAllTransactions(TransactionsFilters filters) 
     {
-        var results = await _db.LoadData<TransactionModel, dynamic>(CommandType.StoredProcedure, "dbo.spTransactions_GetAll", new { });
+        var results = await _db.LoadData<TransactionModel, dynamic>(CommandType.StoredProcedure, 
+            "dbo.spTransactions_GetAll", filters);
         return results;
     }
 

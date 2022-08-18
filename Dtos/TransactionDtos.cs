@@ -7,13 +7,16 @@ public record TransactionCreateDto
     public double Price { get; init; }
     public string Date { get; init; } = String.Empty;
     public int PaymentTypeId { get; init; }
+    public string PaymentTypeName { get; init; } = String.Empty;
     public int CategoryId { get; init; }
+    public string CategoryName { get; set; } = String.Empty;
     public bool Seen { get; init; }
     public static (bool, string) ToTransactionModel(TransactionCreateDto dto,  out TransactionModel model)
     {
         model = null;
-        if (dto.Date == String.Empty)
-            return (false, $"Missing date property");
+        var isDateCorrect = DateTime.TryParse(dto.Date, out DateTime date);
+        if (dto.Date == String.Empty || !isDateCorrect)
+            return (false, $"Missing / wrong date property");
         if (dto.PaymentTypeId == 0)
             return (false, $"Missing Payment Type property");
         if (dto.CategoryId == 0)
@@ -23,7 +26,7 @@ public record TransactionCreateDto
         model = new()
         {
            CategoryId = dto.CategoryId,
-           Date = DateTime.Parse(dto.Date),
+           Date = date,
            PaymentTypeId = dto.PaymentTypeId,
            Description = dto.Description,
            Price = dto.Price,
@@ -68,6 +71,8 @@ public record TransactionReadDto
     public double Price { get; init; }
     public string? Date { get; set; } = String.Empty;
     public int PaymentTypeId { get; init; } 
+    public string PaymentTypeName { get; set; } = String.Empty;
     public int CategoryId { get; init; }
+    public string CategoryTypeName { get; set; } = String.Empty;
     public bool Seen { get; init; }
 }
