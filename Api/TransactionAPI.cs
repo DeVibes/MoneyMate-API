@@ -99,18 +99,28 @@ public static class TransactionsAPI
         }
     }
 
-    public static async Task<IResult> UpdateTransaction(int id, TransactionCreateDto transactionDto, ITransactionRepository repo)
+    public static async Task<IResult> UpdateTransaction(int id, TransactionCreateDto transactionDto, ITransactionRepository repo,
+        ICategoryRepository catRepo, IPaymentTypeRepository payRepo
+    )
     {
         try
         {
-            var mappingResult = TransactionCreateDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
-            if (mappingResult.Item1)
+            var (isMappingSuccessful, mappingErrorIfExists) = TransactionCreateDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
+            if (isMappingSuccessful)
             {
+                var categoryId = transaction.CategoryId;
+                var existingCategoriesId = await catRepo.GetAllCategories();
+                if (!existingCategoriesId.ToList().Exists(cat => cat.Item1 == categoryId ))
+                    return MissingCategoryBadRequest;
+                var paymentTypeId = transaction.PaymentTypeId;
+                var existingPaymentsTypeId = await payRepo.GetAllPaymentTypes();
+                if (!existingPaymentsTypeId.ToList().Exists(paymentType => paymentType.Item1 == paymentTypeId ))
+                    return MissingPaymentTypeBadRequest;
                 await repo.UpdateTransactionById(id, transaction);
                 return Results.NoContent();
             }
             else
-                return Results.BadRequest(mappingResult.Item2);
+                return Results.BadRequest(mappingErrorIfExists);
         }
         catch (System.Exception ex)
         {
@@ -118,18 +128,34 @@ public static class TransactionsAPI
         }
     }
 
-    public static async Task<IResult> PatchTransaction(int id, TransactionPatchDto transactionDto, ITransactionRepository repo)
+    public static async Task<IResult> PatchTransaction(int id, TransactionPatchDto transactionDto, ITransactionRepository repo, 
+        ICategoryRepository catRepo, IPaymentTypeRepository payRepo
+    )
     {
         try
         {
-            var mappingResult = TransactionPatchDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
-            if (mappingResult.Item1)
+            var (mappingResult, mappingErrorIfExists) = TransactionPatchDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
+            if (mappingResult)
             {
+                var categoryId = transaction.CategoryId;
+                if (categoryId is not null)
+                {
+                    var existingCategoriesId = await catRepo.GetAllCategories();
+                    if (!existingCategoriesId.ToList().Exists(cat => cat.Item1 == categoryId ))
+                        return MissingCategoryBadRequest;
+                }
+                var paymentTypeId = transaction.PaymentTypeId;
+                if (paymentTypeId is not null)
+                {
+                    var existingPaymentsTypeId = await payRepo.GetAllPaymentTypes();
+                    if (!existingPaymentsTypeId.ToList().Exists(paymentType => paymentType.Item1 == paymentTypeId ))
+                        return MissingPaymentTypeBadRequest;
+                }
                 await repo.PatchTransaction(id, transaction);
                 return Results.NoContent();
             }
             else
-                return Results.BadRequest(mappingResult.Item2);
+                return Results.BadRequest(mappingErrorIfExists);
         }
         catch (NotFoundException)
         {
