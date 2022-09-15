@@ -1,22 +1,24 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace AccountyMinAPI.Models
 {
     public record TransactionModel    
     {
-        public int? Id { get; init; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; init; }
         public string? Description { get; init; }
         public string? Store { get; init; } 
         public double? Price { get; init; }
+        // [BsonDateTimeOptions(Kind = DateTimeKind.Utc, Representation = BsonType.DateTime)]
         public DateTime? Date { get; init; } 
         public int? PaymentTypeId { get; init; } 
-        public string? PaymentTypeName { get; set; }
         public int? CategoryId { get; init; }
-        public string? CategoryTypeName { get; set; }
         public bool? Seen { get; init; }
         public static (bool, string) ToTransactionReadDto(TransactionModel model, out TransactionReadDto dto)
         {
             dto = null;
-            if (!model.Id.HasValue)
-                return (false, "No id");
             if (!model.CategoryId.HasValue)
                 return (false, "No category");
             if (!model.Date.HasValue)
@@ -31,13 +33,11 @@ namespace AccountyMinAPI.Models
                 return (false, "No seen data");
             dto = new()
             {
-                Id = model.Id.Value,
+                Id = model.Id.ToString(),
                 CategoryId = model.CategoryId.Value,
-                CategoryTypeName = model.CategoryTypeName ?? String.Empty,
                 Date = model.Date.Value.ToString("o"),
                 Description = model.Description ?? String.Empty,
                 PaymentTypeId = model.PaymentTypeId.Value,
-                PaymentTypeName = model.PaymentTypeName ?? String.Empty,
                 Price = model.Price.Value,
                 Seen = model.Seen.Value,
                 Store = model.Store ?? String.Empty

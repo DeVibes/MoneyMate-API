@@ -1,5 +1,8 @@
 using AccountyMinAPI.Api;
 using AccountyMinAPI.DB;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,9 +18,17 @@ builder.Logging.AddSerilog(logger);
 builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<ISqlDataAccess, SqlDataAccess>();
-builder.Services.AddSingleton<ITransactionRepository, TransactionRepository>();
+builder.Services.AddSingleton<IMongoClient>(serviceProvider => 
+{
+    var connectionString = builder.Configuration.GetConnectionString("MongoConnectionString");
+    var settings = MongoClientSettings.FromConnectionString(connectionString);
+    return new MongoClient(settings);
+});
+builder.Services.AddSingleton<ITransactionRepository, MongoTransactionRepository>();
 builder.Services.AddSingleton<ICategoryRepository, CategoryRepository>();
 builder.Services.AddSingleton<IPaymentTypeRepository, PaymentTypeRepository>();
+
+BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(MongoDB.Bson.BsonType.String));
 
 var app = builder.Build();
 

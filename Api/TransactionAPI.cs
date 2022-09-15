@@ -33,7 +33,7 @@ public static class TransactionsAPI
         }
     }
 
-    public static async Task<IResult> GetTransaction(int id, ITransactionRepository repo)
+    public static async Task<IResult> GetTransaction(string id, ITransactionRepository repo)
     {
         try
         {
@@ -82,7 +82,7 @@ public static class TransactionsAPI
         }
     }
 
-    public static async Task<IResult> DeleteTransaction(int id, ITransactionRepository repo)
+    public static async Task<IResult> DeleteTransaction(string id, ITransactionRepository repo)
     {
         try
         {
@@ -99,7 +99,7 @@ public static class TransactionsAPI
         }
     }
 
-    public static async Task<IResult> UpdateTransaction(int id, TransactionCreateDto transactionDto, ITransactionRepository repo,
+    public static async Task<IResult> UpdateTransaction(string id, TransactionCreateDto transactionDto, ITransactionRepository repo,
         ICategoryRepository catRepo, IPaymentTypeRepository payRepo
     )
     {
@@ -128,7 +128,7 @@ public static class TransactionsAPI
         }
     }
 
-    public static async Task<IResult> PatchTransaction(int id, TransactionPatchDto transactionDto, ITransactionRepository repo, 
+    public static async Task<IResult> PatchTransaction(string id, TransactionPatchDto transactionDto, ITransactionRepository repo, 
         ICategoryRepository catRepo, IPaymentTypeRepository payRepo
     )
     {

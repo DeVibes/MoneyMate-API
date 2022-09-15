@@ -2,7 +2,8 @@ using System.Data;
 using AccountyMinAPI.DB;
 namespace AccountyMinAPI.Repositories;
 
-public class TransactionRepository : ITransactionRepository
+// Id prop is a string in mongo
+public class TransactionRepository
 {
     private readonly ISqlDataAccess _db;
     private readonly ILoggerFactory _logger;

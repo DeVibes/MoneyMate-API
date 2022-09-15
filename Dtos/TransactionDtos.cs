@@ -7,9 +7,7 @@ public record TransactionCreateDto
     public double Price { get; init; }
     public string Date { get; init; } = String.Empty;
     public int PaymentTypeId { get; init; }
-    public string PaymentTypeName { get; init; } = String.Empty;
     public int CategoryId { get; init; }
-    public string CategoryName { get; set; } = String.Empty;
     public bool Seen { get; init; }
     public static (bool, string) ToTransactionModel(TransactionCreateDto dto,  out TransactionModel model)
     {
@@ -25,6 +23,7 @@ public record TransactionCreateDto
             return (false, $"Missing Price property");
         model = new()
         {
+        //    Id = new Guid(),
            CategoryId = dto.CategoryId,
            Date = date,
            PaymentTypeId = dto.PaymentTypeId,
@@ -65,14 +64,12 @@ public record TransactionPatchDto
 
 public record TransactionReadDto    
 {
-    public int Id { get; init; }
+    public string Id { get; init; }
     public string Description { get; init; } = String.Empty;
     public string Store { get; init; } = String.Empty;
     public double Price { get; init; }
     public string? Date { get; set; } = String.Empty;
     public int PaymentTypeId { get; init; } 
-    public string PaymentTypeName { get; set; } = String.Empty;
     public int CategoryId { get; init; }
-    public string CategoryTypeName { get; set; } = String.Empty;
     public bool Seen { get; init; }
 }
