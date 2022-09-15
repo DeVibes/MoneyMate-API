@@ -1,5 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
+using AccountyMinAPI.Data;
 
 namespace AccountyMinAPI.Repositories;
 
@@ -16,7 +17,9 @@ public class MongoTransactionRepository : ITransactionRepository
     public async Task DeleteTransactionById(string id)
     {
         var filter = filterBuilder.Eq(transaction => transaction.Id, id);
-        await transactionCollection.DeleteOneAsync(filter);
+        var deleteResult = await transactionCollection.DeleteOneAsync(filter);
+        if (deleteResult.DeletedCount == 0)
+            throw new NotFoundException();
     }
 
     public async Task<IEnumerable<TransactionModel>> GetAllTransactions(TransactionsFilters filters)
