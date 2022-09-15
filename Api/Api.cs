@@ -5,6 +5,7 @@ public static class Api
     public static void ConfigureApi(this WebApplication app)
     {
         // Map /transactions endpoints
+        app.MapGet("/", () => "App is running!");
         app.MapGet("/transactions", TransactionsAPI.GetAllTransactions);
         app.MapGet("/transactions/{id}", TransactionsAPI. GetTransaction);
         app.MapPost("/transactions", TransactionsAPI.InsertTransaction);
