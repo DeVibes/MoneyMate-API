@@ -14,6 +14,14 @@ var logger = new LoggerConfiguration()
     .CreateLogger();
 // Register Serilog
 builder.Logging.AddSerilog(logger);
+var client = builder.Configuration["ClientURL"];
+builder.Services.AddCors(options => options.AddPolicy("MyAllowedOrigins", 
+    policy => 
+    {
+        policy.WithOrigins(client).AllowAnyHeader()
+            .AllowAnyMethod();
+    })
+);
 
 builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddSwaggerGen();
@@ -31,6 +39,7 @@ builder.Services.AddSingleton<IPaymentTypeRepository, PaymentTypeRepository>();
 BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(MongoDB.Bson.BsonType.String));
 
 var app = builder.Build();
+app.UseCors("MyAllowedOrigins");
 
 app.UseHttpsRedirection();
 
