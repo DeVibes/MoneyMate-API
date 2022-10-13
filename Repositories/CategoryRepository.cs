@@ -2,7 +2,7 @@ using System.Data;
 using AccountyMinAPI.DB;
 namespace AccountyMinAPI.Repositories;
 
-public class CategoryRepository : ICategoryRepository
+public class CategoryRepository
 {
     private readonly ISqlDataAccess _db;
     private readonly ILoggerFactory _logger;

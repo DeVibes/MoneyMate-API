@@ -30,11 +30,11 @@ public class TransactionRepository
     public async Task InsertTransaction(TransactionModel transaction) =>
         await _db.SaveData(CommandType.StoredProcedure, "dbo.spTransactions_Insert", new 
         {
-            transaction.CategoryId,
+            transaction.Category.Name,
             transaction.Date,
             transaction.Description,
             transaction.Seen,
-            transaction.PaymentTypeId,
+            // transaction.Payment.Name,
             transaction.Price,
             transaction.Store
         });
@@ -47,11 +47,11 @@ public class TransactionRepository
         await _db.SaveData(CommandType.StoredProcedure, "dbo.spTransactions_Update", new 
         {
             Id = id,
-            transaction.CategoryId,
+            transaction.Category.Name,
             transaction.Date,
             transaction.Description,
             transaction.Seen,
-            transaction.PaymentTypeId,
+            // transaction.Payment.Name,
             transaction.Price,
             transaction.Store
         });
@@ -62,11 +62,11 @@ public class TransactionRepository
         await _db.SaveData(CommandType.StoredProcedure, "dbo.spTransactions_Patch", new
         {
             Id = id,
-            transaction.CategoryId,
+            transaction.Category.Name,
             transaction.Date,
             transaction.Description,
             transaction.Seen,
-            transaction.PaymentTypeId,
+            // transaction.PaymentTypeId,
             transaction.Price,
             transaction.Store
         });

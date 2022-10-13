@@ -2,7 +2,7 @@ using System.Data;
 using AccountyMinAPI.DB;
 namespace AccountyMinAPI.Repositories;
 
-public class PaymentTypeRepository : IPaymentTypeRepository
+public class PaymentTypeRepository
 {
     private readonly ISqlDataAccess _db;
     private readonly ILoggerFactory _logger;

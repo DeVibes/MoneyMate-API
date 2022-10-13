@@ -2,7 +2,7 @@ namespace AccountyMinAPI.Repositories;
 
 public interface ICategoryRepository
 {
-    Task<IEnumerable<(int, string)>> GetAllCategories();
-    Task InsertCategory(string categoryName);
-    Task DeleteCategoryById(int id);
+    Task<IEnumerable<CategoryModel>> GetAllCategories();
+    Task InsertCategory(CategoryModel category);
+    Task<bool> DeleteCategoryById(string id);
 }

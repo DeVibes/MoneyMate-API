@@ -33,8 +33,8 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
     return new MongoClient(settings);
 });
 builder.Services.AddSingleton<ITransactionRepository, MongoTransactionRepository>();
-builder.Services.AddSingleton<ICategoryRepository, CategoryRepository>();
-builder.Services.AddSingleton<IPaymentTypeRepository, PaymentTypeRepository>();
+builder.Services.AddSingleton<ICategoryRepository, MongoCategoryRepository>();
+builder.Services.AddSingleton<IPaymentTypeRepository, MongoPaymentRepository>();
 
 BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(MongoDB.Bson.BsonType.String));
 

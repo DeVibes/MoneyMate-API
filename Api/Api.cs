@@ -12,5 +12,15 @@ public static class Api
         app.MapDelete("/transactions/{id}", TransactionsAPI.DeleteTransaction);
         app.MapPut("/transactions/{id}", TransactionsAPI.UpdateTransaction);
         app.MapMethods("/transactions/{id}", new[] { "PATCH" }, TransactionsAPI.PatchTransaction);
+
+        // Map /categories endpoints
+        app.MapGet("/categories", CategoryAPI.GetAllCategories);
+        app.MapPost("/categories", CategoryAPI.InsertCategory);
+        app.MapDelete("/categories/{id}", CategoryAPI.DeleteCategory);
+
+        // Map /payments endpoints
+        app.MapGet("/payments", PaymentAPI.GetAllPaymentTypes);
+        app.MapPost("/payments", PaymentAPI.InsertPaymentType);
+        app.MapDelete("/payments/{id}", PaymentAPI.DeletePaymentType);
     }
 }

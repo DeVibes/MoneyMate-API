@@ -1,6 +1,6 @@
-using MongoDB.Bson;
 using MongoDB.Driver;
 using AccountyMinAPI.Data;
+using MongoDB.Bson;
 
 namespace AccountyMinAPI.Repositories;
 
@@ -16,7 +16,8 @@ public class MongoTransactionRepository : ITransactionRepository
     }
     public async Task DeleteTransactionById(string id)
     {
-        var filter = filterBuilder.Eq(transaction => transaction.Id, id);
+        var _id = new ObjectId(id);
+        var filter = filterBuilder.Eq(transaction => transaction.Id, _id);
         var deleteResult = await transactionCollection.DeleteOneAsync(filter);
         if (deleteResult.DeletedCount == 0)
             throw new NotFoundException();
@@ -29,7 +30,8 @@ public class MongoTransactionRepository : ITransactionRepository
 
     public async Task<TransactionModel> GetTransactionById(string id)
     {
-        var filter = filterBuilder.Eq(transaction => transaction.Id, id);
+        var _id = new ObjectId(id);
+        var filter = filterBuilder.Eq(transaction => transaction.Id, _id);
         return await transactionCollection.Find(filter).SingleOrDefaultAsync();
     }
 
@@ -47,6 +49,5 @@ public class MongoTransactionRepository : ITransactionRepository
     {
         var filter = filterBuilder.Eq(existingTr => existingTr.Id, transaction.Id);
         await transactionCollection.ReplaceOneAsync(filter, transaction);
-        
     }
 }
