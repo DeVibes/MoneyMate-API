@@ -81,7 +81,7 @@ public record TransactionGetDto
     public string Store { get; init; } = String.Empty;
     public double Price { get; init; }
     public string Date { get; set; } = String.Empty;
-    public string PaymentTypeName { get; init; } 
-    public string CategoryName { get; init; }
+    public string PaymentTypeId { get; init; } 
+    public string CategoryId { get; init; }
     public bool Seen { get; init; }
 }

@@ -20,10 +20,10 @@ namespace AccountyMinAPI.Models
             dto = new()
             {
                 Id = model.Id.ToString(),
-                CategoryName = model.Category.Name,
+                CategoryId = model.Category.Id.ToString(),
                 Date = model.Date.ToString("o"),
                 Description = model.Description,
-                PaymentTypeName = model.Payment.Name,
+                PaymentTypeId = model.Payment.Id.ToString(),
                 Price = model.Price,
                 Seen = model.Seen,
                 Store = model.Store
