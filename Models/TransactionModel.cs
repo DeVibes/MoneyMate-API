@@ -17,13 +17,15 @@ namespace AccountyMinAPI.Models
         //TODO Handle mapping errors from DB
         public static void ToTransactionGetDto(TransactionModel model, out TransactionGetDto dto)
         {
+            CategoryModel.ToCategoryGetDto(model.Category, out CategoryGetDto category);
+            PaymentModel.ToPaymentGetDto(model.Payment, out PaymentGetDto payment);
             dto = new()
             {
                 Id = model.Id.ToString(),
-                CategoryId = model.Category.Id.ToString(),
+                Category = category,
                 Date = model.Date.ToString("o"),
                 Description = model.Description,
-                PaymentTypeId = model.Payment.Id.ToString(),
+                PaymentType = payment,
                 Price = model.Price,
                 Seen = model.Seen,
                 Store = model.Store
