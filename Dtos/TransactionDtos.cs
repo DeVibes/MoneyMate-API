@@ -33,13 +33,14 @@ public record TransactionPostDto
             type.Id.ToString() == dto.PaymentTypeId);
         if (paymentTypeData == null)
             return MappingResponse.PAYMENT_NOT_EXISTS;
+        var incomeCat = existingCategories.ToList().Find(cat => cat.Name == "Income")?.Id.ToString();
         model = new()
         {
            Category = categoryData,
            Date = date,
            Payment = paymentTypeData,
            Description = dto.Description,
-           Price = dto.Price,
+           Price = dto.CategoryId == incomeCat ? dto.Price : dto.Price * -1,
            Seen = dto.Seen,
            Store = dto.Store 
         };
