@@ -8,4 +8,5 @@ public interface ITransactionRepository
     Task DeleteTransactionById(string id);
     Task UpdateTransactionById(string id, TransactionModel transaction);
     Task PatchTransaction(string id, TransactionModel transaction);
+    Task PatchSeenStatus(string id, bool seen);
 }

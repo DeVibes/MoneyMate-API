@@ -1,6 +1,7 @@
 using MongoDB.Driver;
 using AccountyMinAPI.Data;
 using MongoDB.Bson;
+using System.Reflection;
 
 namespace AccountyMinAPI.Repositories;
 
@@ -45,9 +46,17 @@ public class MongoTransactionRepository : ITransactionRepository
         throw new NotImplementedException();
     }
 
-    public async Task UpdateTransactionById(string id, TransactionModel transaction)
+    public Task UpdateTransactionById(string id, TransactionModel transaction)
     {
-        var filter = filterBuilder.Eq(existingTr => existingTr.Id, transaction.Id);
-        await transactionCollection.ReplaceOneAsync(filter, transaction);
+        throw new NotImplementedException();
     }
+
+    public async Task PatchSeenStatus(string id, bool seen)
+    {
+        var _id = new ObjectId(id);
+        var filter = filterBuilder.Eq(transaction => transaction.Id, _id);
+        var update = Builders<TransactionModel>.Update.Set("Seen", seen);
+        await transactionCollection.UpdateOneAsync(filter, update);
+        return;
+    } 
 }

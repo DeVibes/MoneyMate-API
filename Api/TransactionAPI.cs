@@ -116,40 +116,68 @@ public static class TransactionsAPI
     }
 
     public static async Task<IResult> UpdateTransaction(string id, TransactionPostDto transactionDto, ITransactionRepository repo,
-        ICategoryRepository catRepo, IPaymentTypeRepository payRepo
+        ICategoryRepository catRepo, IPaymentTypeRepository paymentRepo
     )
     {
-        return Results.Problem("Not supporeted yet");
         // try
         // {
-        //     var (isMappingSuccessful, mappingErrorIfExists) = TransactionCreateDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
-        //     if (isMappingSuccessful)
+        //     var existingCategories = await catRepo.GetAllCategories();
+        //     var existingPaymentTypes = await paymentRepo.GetAllPaymentTypes();
+        //     var mappingResponse = TransactionPostDto.ToTransactionModel(transactionDto, 
+        //         existingCategories, existingPaymentTypes, out TransactionModel transaction);
+        //     switch (mappingResponse)
         //     {
-        //         // var categoryId = transaction.CategoryId;
-        //         // var existingCategoriesId = await catRepo.GetAllCategories();
-        //         // if (!existingCategoriesId.ToList().Exists(cat => cat.Item1 == categoryId ))
-        //         //     return MissingCategoryBadRequest;
-        //         // var paymentTypeId = transaction.PaymentTypeId;
-        //         // var existingPaymentsTypeId = await payRepo.GetAllPaymentTypes();
-        //         // if (!existingPaymentsTypeId.ToList().Exists(paymentType => paymentType.Item1 == paymentTypeId ))
-        //         //     return MissingPaymentTypeBadRequest;
-        //         await repo.UpdateTransactionById(id, transaction);
-        //         return Results.NoContent();
+        //         case MappingResponse.OK:
+        //             await repo.UpdateTransactionById(id, transaction);
+        //             return Results.NoContent();
+        //         case MappingResponse.MISSING_PRICE:
+        //             return Results.BadRequest("Missing price");
+        //         case MappingResponse.MISSING_DATE:
+        //             return Results.BadRequest("Missing date");
+        //         case MappingResponse.MISSING_CATEGORY:
+        //             return Results.BadRequest("Missing category");
+        //         case MappingResponse.MISSING_PAYMENT:
+        //             return Results.BadRequest("Missing payment");
+        //         case MappingResponse.CATEGORY_NOT_EXISTS:
+        //             return Results.BadRequest(new 
+        //             {
+        //                 Message = "Invalid category, existing categories:",
+        //                 Types = existingCategories.Select(cat => cat.Name)
+        //             });
+        //         case MappingResponse.PAYMENT_NOT_EXISTS:
+        //             return Results.BadRequest(new 
+        //             {
+        //                 Message = "Invalid payment type, existing types:",
+        //                 Types = existingPaymentTypes.Select(type => type.Name)
+        //             });
+        //         case MappingResponse.INVALID_DATE:
+        //             return Results.BadRequest("Invalid date");
+        //         default:
+        //             return Results.BadRequest("Something went wrong");
         //     }
-        //     else
-        //         return Results.BadRequest(mappingErrorIfExists);
         // }
-        // catch (System.Exception ex)
+        // catch (Exception ex)
         // {
         //     return Results.Problem(ex.Message);
         // }
+        return Results.Problem("Not supporeted yet");
     }
 
-    public static async Task<IResult> PatchTransaction(string id, TransactionPatchDto transactionDto, ITransactionRepository repo, 
-        ICategoryRepository catRepo, IPaymentTypeRepository payRepo
-    )
+    // public static async Task<IResult> PatchTransaction(string id, TransactionPatchDto transactionDto, ITransactionRepository repo, 
+    //     ICategoryRepository catRepo, IPaymentTypeRepository payRepo
+    // )
+    public static async Task<IResult> PatchTransaction(string id, bool seen, ITransactionRepository transactionRepository)
     {
-        return Results.Problem("Not supporeted yet");
+        //TODO implement rest of the PATCH
+        try
+        {
+            await transactionRepository.PatchSeenStatus(id, seen);
+            return Results.Ok();
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
     //     try
     //     {
     //         var (mappingResult, mappingErrorIfExists) = TransactionPatchDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
