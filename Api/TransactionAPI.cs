@@ -174,6 +174,10 @@ public static class TransactionsAPI
             await transactionRepository.PatchSeenStatus(id, seen);
             return Results.Ok();
         }
+        catch (NotFoundException)
+        {
+            return Results.NotFound($"ID - {id} was not found");
+        }
         catch (System.Exception ex)
         {
             return Results.Problem(ex.Message);

@@ -56,7 +56,8 @@ public class MongoTransactionRepository : ITransactionRepository
         var _id = new ObjectId(id);
         var filter = filterBuilder.Eq(transaction => transaction.Id, _id);
         var update = Builders<TransactionModel>.Update.Set("Seen", seen);
-        await transactionCollection.UpdateOneAsync(filter, update);
-        return;
+        var result = await transactionCollection.UpdateOneAsync(filter, update);
+        if (result.MatchedCount == 0)
+            throw new NotFoundException();
     } 
 }
