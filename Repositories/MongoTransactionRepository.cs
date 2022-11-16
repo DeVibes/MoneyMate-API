@@ -27,10 +27,10 @@ public class MongoTransactionRepository : ITransactionRepository
     public async Task<IEnumerable<TransactionModel>> GetAllTransactions(TransactionsFilters filters)
     {
         var filter = filterBuilder.Empty;
-        if (filters.StartDate != null && filters.EndDate != null)
+        if (filters.FromDate != null && filters.ToDate != null)
         {
-            var dateFilter = filterBuilder.And(filterBuilder.Gte(x => x.Date, filters.StartDate),
-            filterBuilder.Lte(x => x.Date, filters.EndDate));
+            var dateFilter = filterBuilder.And(filterBuilder.Gte(x => x.Date, filters.FromDate),
+            filterBuilder.Lte(x => x.Date, filters.ToDate));
             filter &= dateFilter;
         }
         return await transactionCollection.Find(filter).ToListAsync();
