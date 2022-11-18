@@ -24,7 +24,7 @@ public class MongoTransactionRepository : ITransactionRepository
             throw new NotFoundException();
     }
 
-    public async Task<IEnumerable<TransactionModel>> GetAllTransactions(TransactionsFilters filters)
+    public async Task<(long, IEnumerable<TransactionModel>)> GetAllTransactions(TransactionsFilters filters)
     {
         var filter = filterBuilder.Empty;
         if (filters.FromDate != null && filters.ToDate != null)
@@ -33,7 +33,25 @@ public class MongoTransactionRepository : ITransactionRepository
             filterBuilder.Lte(x => x.Date, filters.ToDate));
             filter &= dateFilter;
         }
-        return await transactionCollection.Find(filter).ToListAsync();
+        var allTransactions = transactionCollection.Find(filter)
+            .SortByDescending(doc => doc.Date);
+
+        var count = await allTransactions.CountDocumentsAsync();
+        var items = await allTransactions.Skip(filters.PageNumber * 10)
+            .Limit(10)
+            .ToListAsync();
+
+        return (count, items);
+
+        // return await transactionCollection.Find(filter)
+        //     .SortByDescending(doc => doc.Date)
+        //     .Skip(filters.PageNumber * 5)
+        //     .Limit(5)
+        //     .ToListAsync();
+        // if (filters.PageNumber != null)
+        // {
+        //     return await transactionCollection.Find(filter).ToListAsync();
+        // }
     }
 
     public async Task<TransactionModel> GetTransactionById(string id)
@@ -66,5 +84,5 @@ public class MongoTransactionRepository : ITransactionRepository
         var result = await transactionCollection.UpdateOneAsync(filter, update);
         if (result.MatchedCount == 0)
             throw new NotFoundException();
-    } 
+    }
 }

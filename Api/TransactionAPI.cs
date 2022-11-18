@@ -13,14 +13,19 @@ public static class TransactionsAPI
         try
         {
             var filters = TransactionsFilters.ReadFiltersFromQuery(request);
-            var transactions = await repo.GetAllTransactions(filters);
+            var (count, transactions) = await repo.GetAllTransactions(filters);
             var transactionsDto = new List<TransactionGetDto>();
             foreach (var transaction in transactions)
             {
                 TransactionModel.ToTransactionGetDto(transaction, out TransactionGetDto dto);
                 transactionsDto.Add(dto);
             }
-            return Results.Ok(transactionsDto);
+            return Results.Ok(new
+            {
+                itemsCount = count,
+                page = filters.PageNumber,
+                transactions = transactionsDto
+            });
         }
         catch (NotFoundException)
         {
@@ -52,14 +57,14 @@ public static class TransactionsAPI
         }
     }
 
-    public static async Task<IResult> InsertTransaction(TransactionPostDto transactionDto, 
+    public static async Task<IResult> InsertTransaction(TransactionPostDto transactionDto,
         ITransactionRepository repo, ICategoryRepository catRepo, IPaymentTypeRepository paymentRepo)
     {
         try
         {
             var existingCategories = await catRepo.GetAllCategories();
             var existingPaymentTypes = await paymentRepo.GetAllPaymentTypes();
-            var mappingResponse = TransactionPostDto.ToTransactionModel(transactionDto, 
+            var mappingResponse = TransactionPostDto.ToTransactionModel(transactionDto,
                 existingCategories, existingPaymentTypes, out TransactionModel transaction);
             switch (mappingResponse)
             {
@@ -75,13 +80,13 @@ public static class TransactionsAPI
                 case MappingResponse.MISSING_PAYMENT:
                     return Results.BadRequest("Missing payment");
                 case MappingResponse.CATEGORY_NOT_EXISTS:
-                    return Results.BadRequest(new 
+                    return Results.BadRequest(new
                     {
                         Message = "Invalid category, existing categories:",
                         Types = existingCategories.Select(cat => cat.Name)
                     });
                 case MappingResponse.PAYMENT_NOT_EXISTS:
-                    return Results.BadRequest(new 
+                    return Results.BadRequest(new
                     {
                         Message = "Invalid payment type, existing types:",
                         Types = existingPaymentTypes.Select(type => type.Name)
@@ -182,38 +187,38 @@ public static class TransactionsAPI
         {
             return Results.Problem(ex.Message);
         }
-    //     try
-    //     {
-    //         var (mappingResult, mappingErrorIfExists) = TransactionPatchDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
-    //         if (mappingResult)
-    //         {
-    //             var categoryId = transaction.CategoryId;
-    //             if (categoryId is not null)
-    //             {
-    //                 var existingCategoriesId = await catRepo.GetAllCategories();
-    //                 // if (!existingCategoriesId.ToList().Exists(cat => cat.Item1 == categoryId ))
-    //                 //     return MissingCategoryBadRequest;
-    //             }
-    //             var paymentTypeId = transaction.PaymentTypeId;
-    //             if (paymentTypeId is not null)
-    //             {
-    //                 var existingPaymentsTypeId = await payRepo.GetAllPaymentTypes();
-    //                 // if (!existingPaymentsTypeId.ToList().Exists(paymentType => paymentType.Item1 == paymentTypeId ))
-    //                 //     return MissingPaymentTypeBadRequest;
-    //             }
-    //             await repo.PatchTransaction(id, transaction);
-    //             return Results.NoContent();
-    //         }
-    //         else
-    //             return Results.BadRequest(mappingErrorIfExists);
-    //     }
-    //     catch (NotFoundException)
-    //     {
-    //         return Results.NotFound($"ID - {id} was not found");
-    //     }
-    //     catch (System.Exception ex)
-    //     {
-    //         return Results.Problem(ex.Message);
-    //     }
+        //     try
+        //     {
+        //         var (mappingResult, mappingErrorIfExists) = TransactionPatchDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
+        //         if (mappingResult)
+        //         {
+        //             var categoryId = transaction.CategoryId;
+        //             if (categoryId is not null)
+        //             {
+        //                 var existingCategoriesId = await catRepo.GetAllCategories();
+        //                 // if (!existingCategoriesId.ToList().Exists(cat => cat.Item1 == categoryId ))
+        //                 //     return MissingCategoryBadRequest;
+        //             }
+        //             var paymentTypeId = transaction.PaymentTypeId;
+        //             if (paymentTypeId is not null)
+        //             {
+        //                 var existingPaymentsTypeId = await payRepo.GetAllPaymentTypes();
+        //                 // if (!existingPaymentsTypeId.ToList().Exists(paymentType => paymentType.Item1 == paymentTypeId ))
+        //                 //     return MissingPaymentTypeBadRequest;
+        //             }
+        //             await repo.PatchTransaction(id, transaction);
+        //             return Results.NoContent();
+        //         }
+        //         else
+        //             return Results.BadRequest(mappingErrorIfExists);
+        //     }
+        //     catch (NotFoundException)
+        //     {
+        //         return Results.NotFound($"ID - {id} was not found");
+        //     }
+        //     catch (System.Exception ex)
+        //     {
+        //         return Results.Problem(ex.Message);
+        //     }
     }
 }
