@@ -9,4 +9,5 @@ public interface ITransactionRepository
     Task UpdateTransactionById(string id, TransactionModel transaction);
     Task PatchTransaction(string id, TransactionModel transaction);
     Task PatchSeenStatus(string id, bool seen);
+    Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters);
 }

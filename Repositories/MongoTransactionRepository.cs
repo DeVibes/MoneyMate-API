@@ -9,6 +9,7 @@ public class MongoTransactionRepository : ITransactionRepository
 {
     private readonly IMongoCollection<TransactionModel> transactionCollection;
     private readonly FilterDefinitionBuilder<TransactionModel> filterBuilder = Builders<TransactionModel>.Filter;
+    private readonly ProjectionDefinitionBuilder<TransactionModel> projectionBuilder = Builders<TransactionModel>.Projection;
 
     public MongoTransactionRepository(IMongoClient mongoClient, IConfiguration configuration)
     {
@@ -42,16 +43,6 @@ public class MongoTransactionRepository : ITransactionRepository
             .ToListAsync();
 
         return (count, items);
-
-        // return await transactionCollection.Find(filter)
-        //     .SortByDescending(doc => doc.Date)
-        //     .Skip(filters.PageNumber * 5)
-        //     .Limit(5)
-        //     .ToListAsync();
-        // if (filters.PageNumber != null)
-        // {
-        //     return await transactionCollection.Find(filter).ToListAsync();
-        // }
     }
 
     public async Task<TransactionModel> GetTransactionById(string id)
@@ -84,5 +75,44 @@ public class MongoTransactionRepository : ITransactionRepository
         var result = await transactionCollection.UpdateOneAsync(filter, update);
         if (result.MatchedCount == 0)
             throw new NotFoundException();
+    }
+
+    public async Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters)
+    {
+        var fromDate = filters.FromDate.HasValue ? filters.FromDate.Value : DateTime.MinValue;
+        var toDate = filters.ToDate.HasValue ? filters.ToDate.Value : DateTime.MinValue;
+
+        var monthlyNonIncomefilter = filterBuilder.Gte(x => x.Date, fromDate) &
+            filterBuilder.Lte(x => x.Date, toDate);
+
+        // var priceProjection = projectionBuilder.Expression(u => new
+        // {
+        //     Price = u.Price,
+        //     Type = u.Category.Name == "Income" ? "Income" : "Outcome"
+        // });
+
+
+        var categoriesedTransactions = await transactionCollection.Aggregate()
+            .Match(monthlyNonIncomefilter)
+            // .Project(priceProjection)
+            .Group(
+                tr => tr.Category,
+                group => new
+                {
+                    Category = group.Key,
+                    Total = group.Sum(x => x.Price)
+                }
+            )
+            .ToListAsync();
+
+        var incomeArray = categoriesedTransactions.Where(c => c.Category.Name == "Income");
+        var outcomesArray = categoriesedTransactions.Except(incomeArray);
+        return new BalanceModel()
+        {
+            Income = incomeArray.FirstOrDefault()?.Total ?? 0,
+            Outcomes = outcomesArray.Sum(o => o.Total),
+            FromDate = fromDate,
+            ToDate = toDate
+        };
     }
 }
