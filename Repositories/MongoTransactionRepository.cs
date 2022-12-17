@@ -85,13 +85,6 @@ public class MongoTransactionRepository : ITransactionRepository
         var monthlyNonIncomefilter = filterBuilder.Gte(x => x.Date, fromDate) &
             filterBuilder.Lte(x => x.Date, toDate);
 
-        // var priceProjection = projectionBuilder.Expression(u => new
-        // {
-        //     Price = u.Price,
-        //     Type = u.Category.Name == "Income" ? "Income" : "Outcome"
-        // });
-
-
         var categoriesedTransactions = await transactionCollection.Aggregate()
             .Match(monthlyNonIncomefilter)
             .Group(
@@ -104,11 +97,13 @@ public class MongoTransactionRepository : ITransactionRepository
             )
             .ToListAsync();
 
+        var income = categoriesedTransactions.Where(x => x.Category == "Income");
+        var outcomes = categoriesedTransactions.Where(x => x.Category == "MonthlySpent");
         
         return new BalanceModel()
         {
-            Income = categoriesedTransactions.Where(x => x.Category == "Income").First().Total,
-            Outcomes = categoriesedTransactions.Where(x => x.Category == "MonthlySpent").First().Total,
+            Income = income.Count() == 0 ? 0 : income.First().Total,
+            Outcomes = outcomes.Count() == 0 ? 0 : outcomes.First().Total,
             FromDate = fromDate,
             ToDate = toDate
         };
