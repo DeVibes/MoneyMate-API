@@ -94,9 +94,8 @@ public class MongoTransactionRepository : ITransactionRepository
 
         var categoriesedTransactions = await transactionCollection.Aggregate()
             .Match(monthlyNonIncomefilter)
-            // .Project(priceProjection)
             .Group(
-                tr => tr.Category,
+                x => x.Category.Name == "Income" ? "Income" : "MonthlySpent",
                 group => new
                 {
                     Category = group.Key,
@@ -105,12 +104,11 @@ public class MongoTransactionRepository : ITransactionRepository
             )
             .ToListAsync();
 
-        var incomeArray = categoriesedTransactions.Where(c => c.Category.Name == "Income");
-        var outcomesArray = categoriesedTransactions.Except(incomeArray);
+        
         return new BalanceModel()
         {
-            Income = incomeArray.FirstOrDefault()?.Total ?? 0,
-            Outcomes = outcomesArray.Sum(o => o.Total),
+            Income = categoriesedTransactions.Where(x => x.Category == "Income").First().Total,
+            Outcomes = categoriesedTransactions.Where(x => x.Category == "MonthlySpent").First().Total,
             FromDate = fromDate,
             ToDate = toDate
         };
