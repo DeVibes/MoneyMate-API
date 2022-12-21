@@ -86,3 +86,9 @@ public record TransactionGetDto
     public CategoryGetDto Category { get; init; }
     public bool Seen { get; init; }
 }
+
+public record TransactionCategory
+{
+    public string CategoryName { get; set; }
+    public double Total { get; set; }
+}

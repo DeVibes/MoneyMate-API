@@ -221,4 +221,18 @@ public static class TransactionsAPI
         //         return Results.Problem(ex.Message);
         //     }
     }
+    
+    public static async Task<IResult> GetMonthlyByCategory(ITransactionRepository repo, HttpRequest request)
+    {
+        try
+        {
+            var filters = TransactionsFilters.ReadFiltersFromQuery(request);
+            var result = await repo.GetMonthlyByCategory(filters);
+            return Results.Ok(result);
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
 }

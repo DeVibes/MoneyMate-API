@@ -8,6 +8,7 @@ public static class Api
         app.MapGet("/", () => "App is running!");
         app.MapGet("/transactions", TransactionsAPI.GetAllTransactions);
         app.MapGet("/transactions/{id}", TransactionsAPI.GetTransaction);
+        app.MapGet("/transactions/category", TransactionsAPI.GetMonthlyByCategory);
         app.MapPost("/transactions", TransactionsAPI.InsertTransaction);
         app.MapDelete("/transactions/{id}", TransactionsAPI.DeleteTransaction);
         app.MapPut("/transactions/{id}", TransactionsAPI.UpdateTransaction);

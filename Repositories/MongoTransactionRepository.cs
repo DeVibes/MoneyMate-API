@@ -108,4 +108,28 @@ public class MongoTransactionRepository : ITransactionRepository
             ToDate = toDate
         };
     }
+
+    public async Task<IEnumerable<TransactionCategory>> GetMonthlyByCategory(TransactionsFilters filters)
+    {
+        var fromDate = filters.FromDate.HasValue ? filters.FromDate.Value : DateTime.MinValue;
+        var toDate = filters.ToDate.HasValue ? filters.ToDate.Value : DateTime.MinValue;
+
+        var monthlyNonIncomefilter = filterBuilder.Gte(x => x.Date, fromDate) &
+            filterBuilder.Lte(x => x.Date, toDate) & 
+            filterBuilder.Ne(x => x.Category.Name, "Income");
+
+        var categoriesedTransactions = await transactionCollection.Aggregate()
+            .Match(monthlyNonIncomefilter)
+            .Group(
+                x => x.Category.Name,
+                group => new TransactionCategory
+                {
+                    CategoryName = group.Key,
+                    Total = group.Sum(x => Math.Abs(x.Price))
+                }
+            )
+            .ToListAsync();
+
+        return categoriesedTransactions;
+    }
 }

@@ -10,4 +10,5 @@ public interface ITransactionRepository
     Task PatchTransaction(string id, TransactionModel transaction);
     Task PatchSeenStatus(string id, bool seen);
     Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters);
+    Task<IEnumerable<TransactionCategory>> GetMonthlyByCategory(TransactionsFilters filters);
 }
