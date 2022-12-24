@@ -93,8 +93,7 @@ public class MongoTransactionRepository : ITransactionRepository
                 {
                     Category = group.Key,
                     Total = group.Sum(x => x.Price)
-                }
-            )
+                })
             .ToListAsync();
 
         var income = categoriesedTransactions.Where(x => x.Category == "Income");
@@ -126,10 +125,36 @@ public class MongoTransactionRepository : ITransactionRepository
                 {
                     CategoryName = group.Key,
                     Total = group.Sum(x => Math.Abs(x.Price))
-                }
-            )
+                })
             .ToListAsync();
-
         return categoriesedTransactions;
+    }
+    
+    public async Task<IEnumerable<TransactionMonth>> GetYearlySumByMonth(TransactionsFilters filters)
+    {
+        var fromDate = filters.FromDate.HasValue ? filters.FromDate.Value : DateTime.MinValue;
+        var toDate = filters.ToDate.HasValue ? filters.ToDate.Value : DateTime.MinValue;
+
+        var yearlyNonIncomefilter = filterBuilder.Gte(x => x.Date, fromDate) &
+            filterBuilder.Lte(x => x.Date, toDate) & 
+            filterBuilder.Ne(x => x.Category.Name, "Income");
+
+        var yearlyTransactions = await transactionCollection.Aggregate()
+            .Match(yearlyNonIncomefilter)
+            .Group(
+                x => new DateTime(x.Date.Year, x.Date.Month, 1),
+                group => new 
+                {
+                    Date = group.Key,
+                    Total = group.Sum(x => x.Price)
+                })
+            .Project(g => new TransactionMonth
+            {
+                Total = g.Total,
+                Month = g.Date.Month,
+                Year = g.Date.Year
+            })
+            .ToListAsync();
+        return yearlyTransactions;
     }
 }

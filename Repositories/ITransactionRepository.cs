@@ -11,4 +11,5 @@ public interface ITransactionRepository
     Task PatchSeenStatus(string id, bool seen);
     Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters);
     Task<IEnumerable<TransactionCategory>> GetMonthlyByCategory(TransactionsFilters filters);
+    Task<IEnumerable<TransactionMonth>> GetYearlySumByMonth(TransactionsFilters filters);
 }

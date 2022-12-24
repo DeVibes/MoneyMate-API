@@ -9,6 +9,7 @@ public static class Api
         app.MapGet("/transactions", TransactionsAPI.GetAllTransactions);
         app.MapGet("/transactions/{id}", TransactionsAPI.GetTransaction);
         app.MapGet("/transactions/category", TransactionsAPI.GetMonthlyByCategory);
+        app.MapGet("/transactions/yearly", TransactionsAPI.GetYearlySumByMonth);
         app.MapPost("/transactions", TransactionsAPI.InsertTransaction);
         app.MapDelete("/transactions/{id}", TransactionsAPI.DeleteTransaction);
         app.MapPut("/transactions/{id}", TransactionsAPI.UpdateTransaction);
