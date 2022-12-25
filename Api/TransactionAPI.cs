@@ -168,9 +168,6 @@ public static class TransactionsAPI
         return Results.Problem("Not supporeted yet");
     }
 
-    // public static async Task<IResult> PatchTransaction(string id, TransactionPatchDto transactionDto, ITransactionRepository repo, 
-    //     ICategoryRepository catRepo, IPaymentTypeRepository payRepo
-    // )
     public static async Task<IResult> PatchTransaction(string id, bool seen, ITransactionRepository transactionRepository)
     {
         //TODO implement rest of the PATCH
@@ -243,6 +240,21 @@ public static class TransactionsAPI
             var filters = TransactionsFilters.ReadFiltersFromQuery(request);
             var result = await repo.GetYearlySumByMonth(filters);
             return Results.Ok(result);
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
+    
+    public static async Task<IResult> GetBalance(ITransactionRepository repo, HttpRequest request)
+    {
+        try
+        {
+            var filters = TransactionsFilters.ReadFiltersFromQuery(request);
+            BalanceModel monthlyBalance = await repo.GetMonthlyBalance(filters);
+            BalanceModel.ToBalanceDto(monthlyBalance, out BalanceDto balanceDto);
+            return Results.Ok(balanceDto);
         }
         catch (System.Exception ex)
         {

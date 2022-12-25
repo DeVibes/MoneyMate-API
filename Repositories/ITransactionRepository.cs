@@ -10,6 +10,6 @@ public interface ITransactionRepository
     Task PatchTransaction(string id, TransactionModel transaction);
     Task PatchSeenStatus(string id, bool seen);
     Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters);
-    Task<IEnumerable<TransactionCategory>> GetMonthlyByCategory(TransactionsFilters filters);
-    Task<IEnumerable<TransactionMonth>> GetYearlySumByMonth(TransactionsFilters filters);
+    Task<IEnumerable<TransactionCategoryModel>> GetMonthlyByCategory(TransactionsFilters filters);
+    Task<IEnumerable<TransactionMonthModel>> GetYearlySumByMonth(TransactionsFilters filters);
 }

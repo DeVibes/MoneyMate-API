@@ -10,6 +10,7 @@ public static class Api
         app.MapGet("/transactions/{id}", TransactionsAPI.GetTransaction);
         app.MapGet("/transactions/category", TransactionsAPI.GetMonthlyByCategory);
         app.MapGet("/transactions/yearly", TransactionsAPI.GetYearlySumByMonth);
+        app.MapGet("/transactions/balance", TransactionsAPI.GetBalance);
         app.MapPost("/transactions", TransactionsAPI.InsertTransaction);
         app.MapDelete("/transactions/{id}", TransactionsAPI.DeleteTransaction);
         app.MapPut("/transactions/{id}", TransactionsAPI.UpdateTransaction);
@@ -24,8 +25,5 @@ public static class Api
         app.MapGet("/payments", PaymentAPI.GetAllPaymentTypes);
         app.MapPost("/payments", PaymentAPI.InsertPaymentType);
         app.MapDelete("/payments/{id}", PaymentAPI.DeletePaymentType);
-
-        // Map /payments endpoints
-        app.MapGet("/balance", BalanceAPI.GetBalance);
     }
 }

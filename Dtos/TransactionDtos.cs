@@ -87,13 +87,21 @@ public record TransactionGetDto
     public bool Seen { get; init; }
 }
 
-public record TransactionCategory
+public record BalanceDto
+{
+    public double Income { get; init; }
+    public double Outcome { get; init; }
+    public string FromDate { get; init; } = String.Empty;
+    public string ToDate { get; init; } = String.Empty;
+}
+
+public record TransactionCategoryDto
 {
     public string CategoryName { get; set; }
     public double Total { get; set; }
 }
 
-public record TransactionMonth
+public record TransactionMonthDto
 {
     public int Year { get; set; }
     public int Month { get; set; }

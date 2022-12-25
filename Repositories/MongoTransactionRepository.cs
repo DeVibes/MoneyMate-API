@@ -102,13 +102,13 @@ public class MongoTransactionRepository : ITransactionRepository
         return new BalanceModel()
         {
             Income = income.Count() == 0 ? 0 : income.First().Total,
-            Outcomes = outcomes.Count() == 0 ? 0 : outcomes.First().Total,
+            Outcome = outcomes.Count() == 0 ? 0 : outcomes.First().Total,
             FromDate = fromDate,
             ToDate = toDate
         };
     }
 
-    public async Task<IEnumerable<TransactionCategory>> GetMonthlyByCategory(TransactionsFilters filters)
+    public async Task<IEnumerable<TransactionCategoryModel>> GetMonthlyByCategory(TransactionsFilters filters)
     {
         var fromDate = filters.FromDate.HasValue ? filters.FromDate.Value : DateTime.MinValue;
         var toDate = filters.ToDate.HasValue ? filters.ToDate.Value : DateTime.MinValue;
@@ -121,7 +121,7 @@ public class MongoTransactionRepository : ITransactionRepository
             .Match(monthlyNonIncomefilter)
             .Group(
                 x => x.Category.Name,
-                group => new TransactionCategory
+                group => new TransactionCategoryModel
                 {
                     CategoryName = group.Key,
                     Total = group.Sum(x => Math.Abs(x.Price))
@@ -130,7 +130,7 @@ public class MongoTransactionRepository : ITransactionRepository
         return categoriesedTransactions;
     }
     
-    public async Task<IEnumerable<TransactionMonth>> GetYearlySumByMonth(TransactionsFilters filters)
+    public async Task<IEnumerable<TransactionMonthModel>> GetYearlySumByMonth(TransactionsFilters filters)
     {
         var fromDate = filters.FromDate.HasValue ? filters.FromDate.Value : DateTime.MinValue;
         var toDate = filters.ToDate.HasValue ? filters.ToDate.Value : DateTime.MinValue;
@@ -148,12 +148,14 @@ public class MongoTransactionRepository : ITransactionRepository
                     Date = group.Key,
                     Total = group.Sum(x => x.Price)
                 })
-            .Project(g => new TransactionMonth
+            .Project(g => new TransactionMonthModel
             {
                 Total = g.Total,
                 Month = g.Date.Month,
                 Year = g.Date.Year
             })
+            .SortBy(item => item.Year)
+            .ThenBy(item => item.Month)
             .ToListAsync();
         return yearlyTransactions;
     }

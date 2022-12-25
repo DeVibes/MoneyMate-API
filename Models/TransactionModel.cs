@@ -32,4 +32,52 @@ namespace AccountyMinAPI.Models
             };
         }
     }
+
+    public record BalanceModel
+    {
+        public double Income { get; init; }
+        public double Outcome { get; init; }
+        public DateTime FromDate { get; init; }
+        public DateTime ToDate { get; init; }
+        public static void ToBalanceDto(BalanceModel model, out BalanceDto dto)
+        {
+            dto = new()
+            {
+                FromDate = model.FromDate.ToString("o"),
+                ToDate = model.ToDate.ToString("o"),
+                Income = model.Income,
+                Outcome = model.Outcome
+            };
+        }
+    }
+
+    public record TransactionCategoryModel
+    {
+        public string CategoryName { get; set; }
+        public double Total { get; set; }
+        public static void ToCategoryMonthDto(TransactionCategoryModel model, out TransactionCategoryDto dto)
+        {
+            dto = new()
+            {
+                CategoryName = model.CategoryName,
+                Total = model.Total
+            };
+        }
+    }
+
+    public record TransactionMonthModel
+    {
+        public int Year { get; set; }
+        public int Month { get; set; }
+        public double Total { get; set; }
+        public static void ToTransactionMonthDto(TransactionMonthModel model, out TransactionMonthDto dto)
+        {
+            dto = new()
+            {
+                Year = model.Year,
+                Month = model.Month,
+                Total = model.Total
+            };
+        }
+    }
 }
