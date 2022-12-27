@@ -1,7 +1,3 @@
-using System.Data.SqlClient;
-using AccountyMinAPI.Data;
-using AccountyMinAPI.DB;
-
 namespace AccountyMinAPI.Api;
 
 public static class TransactionsAPI
