@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.Extensions.Primitives;
 
 namespace AccountyMinAPI.Auth;
 internal static class Auth
@@ -12,4 +13,18 @@ public struct APIRoles
 {
     public static readonly string Admin = "admin";
     public static readonly string User = "user";
+}
+
+public static class RequestHelper
+{
+    public static string GetBearerToken(HttpRequest request)
+    {
+        if (request.Headers.TryGetValue("Authorization", out StringValues values))
+        {
+            string authorizationHeader = values.FirstOrDefault();
+            if (authorizationHeader != null && authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                return authorizationHeader.Substring("Bearer ".Length).Trim();
+        }
+        return String.Empty;
+    }
 }

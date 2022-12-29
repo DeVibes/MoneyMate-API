@@ -1,4 +1,8 @@
+using System.Net;
+using System.Text.Json;
 using AccountyMinAPI.Auth;
+using Microsoft.AspNetCore.Authentication;
+using Newtonsoft.Json.Linq;
 
 namespace AccountyMinAPI.Api;
 
@@ -28,13 +32,28 @@ public static class Api
         app.MapPost("/payments", PaymentAPI.InsertPaymentType).RequireAuthorization(APIRoles.User);
         app.MapDelete("/payments/{id}", PaymentAPI.DeletePaymentType).RequireAuthorization(APIRoles.User);
 
-        app.MapGet("/auth/{username}", async (string username, TokenService service, IUsernameRepository repo) => 
+        app.MapGet("/auth", AuthUser);
+    }
+
+    private static async Task<IResult> AuthUser(HttpRequest request, TokenService service, IUsernameRepository repo)
+    {
+        string? gToken = RequestHelper.GetBearerToken(request);
+        string requestUrl = $"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={gToken}";
+        string username = String.Empty;
+        using (HttpClient client = new())
         {
-            var isUsernameAllowed = await repo.IsUsernameAllowed(username);
-            if (!isUsernameAllowed)
-                return Results.Unauthorized();
-            var token = service.GenerateToken(username);
-            return Results.Ok(new { token = token });
-        });
+            HttpResponseMessage response = await client.GetAsync(requestUrl);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var responseMsg = await response.Content.ReadAsStringAsync();
+                JObject obj = JObject.Parse(responseMsg);
+                username = (string)obj["email"];
+            }
+        }
+        var isUsernameAllowed = await repo.IsUsernameAllowed(username);
+        if (String.IsNullOrEmpty(username) || !isUsernameAllowed)
+            return Results.Unauthorized();
+        var token = service.GenerateToken(username);
+        return Results.Ok(new { token = token });
     }
 }
