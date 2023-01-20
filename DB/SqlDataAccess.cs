@@ -23,8 +23,6 @@ namespace AccountyMinAPI.DB
             // "using" keyword for closing connection after reaching end of scope
             using IDbConnection connection = new SqlConnection(_config.GetConnectionString(connectionId));
             var rows = await connection.QueryAsync<T>(storedProcedureOrQuery, parameters, commandType: commandType);
-            if (rows.Count() == 0)
-                throw new NotFoundException();
             return rows;
         }
 
@@ -36,8 +34,6 @@ namespace AccountyMinAPI.DB
         {
             using IDbConnection connection = new SqlConnection(_config.GetConnectionString(connectionId));
             var result = await connection.ExecuteAsync(storedProcedureOrQuery, parameters, commandType: commandType);
-            if (result == 0)
-                throw new NotFoundException();
         }
     }
 }

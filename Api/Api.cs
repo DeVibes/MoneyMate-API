@@ -10,29 +10,32 @@ public static class Api
 {
     public static void ConfigureApi(this WebApplication app)
     {
-        // Map /transactions endpoints
         app.MapGet("/", () => "App is running!");
-        app.MapGet("/transactions", TransactionsAPI.GetAllTransactions).RequireAuthorization(APIRoles.User);
-        app.MapGet("/transactions/{id}", TransactionsAPI.GetTransaction).RequireAuthorization(APIRoles.User);
-        app.MapGet("/transactions/category", TransactionsAPI.GetMonthlyByCategory).RequireAuthorization(APIRoles.User);
-        app.MapGet("/transactions/yearly", TransactionsAPI.GetYearlySumByMonth).RequireAuthorization(APIRoles.User);
-        app.MapGet("/transactions/balance", TransactionsAPI.GetBalance).RequireAuthorization(APIRoles.User);
-        app.MapPost("/transactions", TransactionsAPI.InsertTransaction).RequireAuthorization(APIRoles.User);
-        app.MapDelete("/transactions/{id}", TransactionsAPI.DeleteTransaction).RequireAuthorization(APIRoles.User);
-        app.MapPut("/transactions/{id}", TransactionsAPI.UpdateTransaction).RequireAuthorization(APIRoles.User);
-        app.MapMethods("/transactions/{id}", new[] { "PATCH" }, TransactionsAPI.PatchTransaction).RequireAuthorization(APIRoles.User);
 
-        // Map /categories endpoints
-        app.MapGet("/categories", CategoryAPI.GetAllCategories).RequireAuthorization(APIRoles.User);
-        app.MapPost("/categories", CategoryAPI.InsertCategory).RequireAuthorization(APIRoles.User);
-        app.MapDelete("/categories/{id}", CategoryAPI.DeleteCategory).RequireAuthorization(APIRoles.User);
+        // Map /transactions endpoints
+        // app.MapGet("/transactions", TransactionsAPI.GetAllTransactions).RequireAuthorization(APIRoles.User);
+        app.MapGet("/transactions/{transactionId}", TransactionsAPI.GetTransactionById);
+        // app.MapGet("/transactions/category", TransactionsAPI.GetMonthlyByCategory).RequireAuthorization(APIRoles.User);
+        // app.MapGet("/transactions/yearly", TransactionsAPI.GetYearlySumByMonth).RequireAuthorization(APIRoles.User);
+        // app.MapGet("/transactions/balance", TransactionsAPI.GetBalance).RequireAuthorization(APIRoles.User);
+        app.MapPost("/transactions/{accountId}", TransactionsAPI.CreateTransaction);
+        // app.MapDelete("/transactions/{id}", TransactionsAPI.DeleteTransaction).RequireAuthorization(APIRoles.User);
+        // app.MapPut("/transactions/{id}", TransactionsAPI.UpdateTransaction).RequireAuthorization(APIRoles.User);
+        // app.MapMethods("/transactions/{id}", new[] { "PATCH" }, TransactionsAPI.PatchTransaction).RequireAuthorization(APIRoles.User);
 
-        // Map /payments endpoints
-        app.MapGet("/payments", PaymentAPI.GetAllPaymentTypes).RequireAuthorization(APIRoles.User);
-        app.MapPost("/payments", PaymentAPI.InsertPaymentType).RequireAuthorization(APIRoles.User);
-        app.MapDelete("/payments/{id}", PaymentAPI.DeletePaymentType).RequireAuthorization(APIRoles.User);
+        // Map /accounts endpoints
+        app.MapGet("/accounts", AccountAPI.GetAccounts);
+        app.MapGet("/accounts/{accountId}", AccountAPI.GetAccountById);
+        app.MapPost("/accounts", AccountAPI.CreateAccount);
+        app.MapPost("/accounts/{accountId}/users", AccountAPI.AssignUserToAccount);
+        app.MapPost("/accounts/{accountId}/payments", AccountAPI.AssignPaymentTypeToAccount);
+        app.MapPost("/accounts/{accountId}/categories", AccountAPI.AddCategoryToAccount);
+        app.MapMethods("/accounts/{accountId}", new[] { "PATCH" }, AccountAPI.PatchAccountById);
+        app.MapDelete("/accounts/{accountId}/users", AccountAPI.DeassignUserFromAccount);
+        app.MapDelete("/accounts/{accountId}/payments", AccountAPI.DeassignPaymentTypeFromAccount);
+        app.MapDelete("/accounts/{accountId}", AccountAPI.DeleteAccountById);
 
-        app.MapGet("/auth", AuthUser);
+        // app.MapGet("/auth", AuthUser);
     }
 
     private static async Task<IResult> AuthUser(HttpRequest request, TokenService service, IUsernameRepository repo)

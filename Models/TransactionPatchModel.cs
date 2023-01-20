@@ -15,7 +15,7 @@ namespace AccountyMinAPI.Models
         // public static void ToTransactionGetDto(TransactionModel model, out TransactionGetDto dto)
         // {
         //     CategoryModel.ToCategoryGetDto(model.Category, out CategoryGetDto category);
-        //     PaymentModel.ToPaymentGetDto(model.Payment, out PaymentGetDto payment);
+        //     PaymentModel.ToGetPaymentDto(model.Payment, out GetPaymentDto payment);
         //     dto = new()
         //     {
         //         Id = model.Id.ToString(),

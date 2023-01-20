@@ -1,66 +1,58 @@
-using AccountyMinAPI.Data;
+// // using AccountyMinAPI.Data;
 
-namespace AccountyMinAPI.Api;
+// namespace AccountyMinAPI.Api;
 
-public static class PaymentAPI
-{
-    public static async Task<IResult> GetAllPaymentTypes(IPaymentTypeRepository repo)
-    {
-        try
-        {
-            var paymentTypes = await repo.GetAllPaymentTypes();
-            List<PaymentGetDto> paymentsDto = new();
-            foreach (var paymentType in paymentTypes)
-            {
-                PaymentModel.ToPaymentGetDto(paymentType, out PaymentGetDto dto);
-                paymentsDto.Add(dto);
-            }
-            return Results.Ok(paymentsDto);
-        }
-        catch (System.Exception ex)
-        {
-            return Results.Problem(ex.Message);
-        }
-    }
+// public static class PaymentAPI
+// {
+//     public static async Task<IResult> GetAllPaymentTypes(IPaymentTypeRepository repo)
+//     {
+//         try
+//         {
+//             var paymentTypes = await repo.GetAllPaymentTypes();
+//             List<GetPaymentDto> paymentsDto = new();
+//             foreach (var paymentType in paymentTypes)
+//             {
+//                 PaymentModel.ToGetPaymentDto(paymentType, out GetPaymentDto dto);
+//                 paymentsDto.Add(dto);
+//             }
+//             return Results.Ok(paymentsDto);
+//         }
+//         catch (System.Exception ex)
+//         {
+//             return Results.Problem(ex.Message);
+//         }
+//     }
 
-    public static async Task<IResult> InsertPaymentType(PaymentPostDto dto, IPaymentTypeRepository repo)
-    {
-        try
-        {
-            var mappingResponse = PaymentPostDto.ToPaymentModel(dto, out PaymentModel paymentType);
-            switch (mappingResponse)
-            {
-                case MappingResponse.OK:
-                    await repo.InsertPaymentType(paymentType);
-                    return Results.Ok($"Payment type added - {paymentType.Name}");
-                case MappingResponse.MISSING_PAYMENT:
-                    return Results.BadRequest("Missing payment");
-                default:
-                    return Results.Problem("Something went wrong");
-            }
-        }
-        catch (PaymentAlreadyExistsException ex)
-        {
-            return Results.BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem(ex.Message);
-        }
-    }
+//     public static async Task<IResult> InsertPaymentType(CreatePaymentRequest dto, IPaymentTypeRepository repo, IAccountRepository accRepo)
+//     {
+//         var (isError, errorMsg) = CreatePaymentRequest.ToPaymentModel(dto, out PaymentModel paymentType);
+//         if (isError)
+//             return Results.BadRequest(errorMsg);
+//         RepositporyModel result = await repo.InsertPaymentType(paymentType);
+//         if (result.ErrorType is ErrorTypeEnum.PAYMENT_ALEADY_EXISTS)
+//             return Results.BadRequest(result.ErrorMessage);
+//         if (result.ErrorType is ErrorTypeEnum.ACCOUNT_NOT_FOUND)
+//             return Results.BadRequest(result.ErrorMessage);
+//         if (result.ErrorType is ErrorTypeEnum.DB_ERROR)
+//             return Results.Problem(result.ErrorMessage);
+//         var isMappingSuccessfull = PaymentModel.ToPaymentDto(result.Payload, out GetPaymentDto paymentDto);
+//         if (isMappingSuccessfull)
+//             return Results.Created(paymentDto.Id, paymentDto);
+//         return Results.Problem("Something went wrong");
+//     }
 
-    public static async Task<IResult> DeletePaymentType(string id, IPaymentTypeRepository repo)
-    {
-        try
-        {
-            var deleteResult = await repo.DeletePaymentTypeById(id);
-            if (deleteResult)
-                return Results.Ok($"Payment type deleted - {id}");
-            return Results.BadRequest($"Payment id not found - {id}");
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem(ex.Message);
-        }
-    }
-}
+//     public static async Task<IResult> DeletePaymentType(string id, IPaymentTypeRepository repo)
+//     {
+//         try
+//         {
+//             var deleteResult = await repo.DeletePaymentTypeById(id);
+//             if (deleteResult)
+//                 return Results.Ok($"Payment type deleted - {id}");
+//             return Results.BadRequest($"Payment id not found - {id}");
+//         }
+//         catch (Exception ex)
+//         {
+//             return Results.Problem(ex.Message);
+//         }
+//     }
+// }

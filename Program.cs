@@ -25,13 +25,14 @@ var client = builder.Configuration["ClientURL"];
 builder.Services.AddCors(options => options.AddPolicy("MyAllowedOrigins", 
     policy => 
     {
-        policy.WithOrigins(client).AllowAnyHeader()
+        policy.WithOrigins(client)
+            .AllowAnyHeader()
             .AllowAnyMethod();
     })
 );
 builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<ISqlDataAccess, SqlDataAccess>();
+// builder.Services.AddSingleton<ISqlDataAccess, SqlDataAccess>();
 builder.Services.AddSingleton<IMongoClient>(serviceProvider => 
 {
     var connectionString = builder.Configuration.GetConnectionString("MongoConnectionString");
@@ -39,9 +40,7 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
     return new MongoClient(settings);
 });
 builder.Services.AddSingleton<ITransactionRepository, MongoTransactionRepository>();
-builder.Services.AddSingleton<ICategoryRepository, MongoCategoryRepository>();
-builder.Services.AddSingleton<IPaymentTypeRepository, MongoPaymentRepository>();
-builder.Services.AddSingleton<IUsernameRepository, MongoUsernameRepository>();
+builder.Services.AddSingleton<IAccountRepository, MongoAccountRepository>();
 builder.Services.AddSingleton<TokenService>();
 
 var secretKey = Auth.GenerateSecretByte();
