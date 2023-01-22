@@ -39,12 +39,12 @@ public class AccountNotFoundException : Exception
 }
 
 
-public class UserException : Exception
+public class UserException : SystemException
 {
     public UserException(string errorMsg) : base(errorMsg) {}
 }
 
-public class ServerException : Exception
+public class ServerException : SystemException
 {
     public ServerException(string errorMsg) : base(errorMsg) {}
 }

@@ -1,9 +1,3 @@
-using System.Net;
-using System.Text.Json;
-using AccountyMinAPI.Auth;
-using Microsoft.AspNetCore.Authentication;
-using Newtonsoft.Json.Linq;
-
 namespace AccountyMinAPI.Api;
 
 public static class Api
@@ -13,15 +7,14 @@ public static class Api
         app.MapGet("/", () => "App is running!");
 
         // Map /transactions endpoints
-        // app.MapGet("/transactions", TransactionsAPI.GetAllTransactions).RequireAuthorization(APIRoles.User);
+        app.MapGet("/transactions/{accountId}/all", TransactionsAPI.GetAllTransactions);
         app.MapGet("/transactions/{transactionId}", TransactionsAPI.GetTransactionById);
-        // app.MapGet("/transactions/category", TransactionsAPI.GetMonthlyByCategory).RequireAuthorization(APIRoles.User);
-        // app.MapGet("/transactions/yearly", TransactionsAPI.GetYearlySumByMonth).RequireAuthorization(APIRoles.User);
-        // app.MapGet("/transactions/balance", TransactionsAPI.GetBalance).RequireAuthorization(APIRoles.User);
+        app.MapGet("/transactions/{accountId}/category", TransactionsAPI.GetMonthlySummary);
+        app.MapGet("/transactions/{accountId}/yearly", TransactionsAPI.GetYearlySumByMonth);
+        app.MapGet("/transactions/{accountId}/balance", TransactionsAPI.GetAccountBalance);
         app.MapPost("/transactions/{accountId}", TransactionsAPI.CreateTransaction);
-        // app.MapDelete("/transactions/{id}", TransactionsAPI.DeleteTransaction).RequireAuthorization(APIRoles.User);
-        // app.MapPut("/transactions/{id}", TransactionsAPI.UpdateTransaction).RequireAuthorization(APIRoles.User);
-        // app.MapMethods("/transactions/{id}", new[] { "PATCH" }, TransactionsAPI.PatchTransaction).RequireAuthorization(APIRoles.User);
+        app.MapDelete("/transactions/{transactionId}", TransactionsAPI.DeleteTransaction);
+        app.MapMethods("/transactions/{accountId}/{transactionId}", new[] { "PATCH" }, TransactionsAPI.PatchTransaction);
 
         // Map /accounts endpoints
         app.MapGet("/accounts", AccountAPI.GetAccounts);
@@ -35,28 +28,6 @@ public static class Api
         app.MapDelete("/accounts/{accountId}/payments", AccountAPI.DeassignPaymentTypeFromAccount);
         app.MapDelete("/accounts/{accountId}", AccountAPI.DeleteAccountById);
 
-        // app.MapGet("/auth", AuthUser);
-    }
-
-    private static async Task<IResult> AuthUser(HttpRequest request, TokenService service, IUsernameRepository repo)
-    {
-        string? gToken = RequestHelper.GetBearerToken(request);
-        string requestUrl = $"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={gToken}";
-        string username = String.Empty;
-        using (HttpClient client = new())
-        {
-            HttpResponseMessage response = await client.GetAsync(requestUrl);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                var responseMsg = await response.Content.ReadAsStringAsync();
-                JObject obj = JObject.Parse(responseMsg);
-                username = (string)obj["email"];
-            }
-        }
-        var isUsernameAllowed = await repo.IsUsernameAllowed(username);
-        if (String.IsNullOrEmpty(username) || !isUsernameAllowed)
-            return Results.Unauthorized();
-        var token = service.GenerateToken(username);
-        return Results.Ok(new { token = token });
+        app.MapGet("/auth", AuthAPI.AuthUser);
     }
 }

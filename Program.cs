@@ -32,7 +32,6 @@ builder.Services.AddCors(options => options.AddPolicy("MyAllowedOrigins",
 );
 builder.Services.AddEndpointsApiExplorer();
 // builder.Services.AddSwaggerGen();
-// builder.Services.AddSingleton<ISqlDataAccess, SqlDataAccess>();
 builder.Services.AddSingleton<IMongoClient>(serviceProvider => 
 {
     var connectionString = builder.Configuration.GetConnectionString("MongoConnectionString");
@@ -41,6 +40,7 @@ builder.Services.AddSingleton<IMongoClient>(serviceProvider =>
 });
 builder.Services.AddSingleton<ITransactionRepository, MongoTransactionRepository>();
 builder.Services.AddSingleton<IAccountRepository, MongoAccountRepository>();
+builder.Services.AddSingleton<IUsernameRepository, MongoUsernameRepository>();
 builder.Services.AddSingleton<TokenService>();
 
 var secretKey = Auth.GenerateSecretByte();

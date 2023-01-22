@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AccountyMinAPI.Auth;
-internal class TokenService
+public class TokenService
 {
     internal string GenerateToken(string username)
     {

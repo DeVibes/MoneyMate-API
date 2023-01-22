@@ -12,9 +12,9 @@ public record TransactionModel
     public string? Store { get; init; } 
     public double? Price { get; init; }
     public DateTime? Date { get; init; }
-    public string? Payment { get; init; }
+    public string? PaymentType { get; init; }
     public string? Category { get; init; }
-    public bool Seen { get; set; }
+    public bool? Seen { get; set; }
 
     public static TransactionResponse ToTransactionResponse(TransactionModel model)
     {
@@ -27,66 +27,84 @@ public record TransactionModel
             Category = model.Category,
             Date = model.Date.Value.ToString("o"),
             Description = model.Description,
-            PaymentType = model.Payment,
+            PaymentType = model.PaymentType,
             Price = model.Price.Value,
-            Seen = model.Seen,
+            Seen = model.Seen.Value,
             Store = model.Store
         };
     }
-
-    // public static TransactionModel ToTransactionGetDto(TransactionModel model, out TransactionGetDto dto)
-    // {
-    //     CategoryModel.ToCategoryGetDto(model.Category, out CategoryGetDto category);
-    //     // PaymentModel.ToGetPaymentDto(model.Payment, out GetPaymentDto payment);
-    //     dto = new()
-    //     {
-    //         Id = model.Id.ToString(),
-    //         Category = category,
-    //         Date = model.Date.ToString("o"),
-    //         Description = model.Description,
-    //         // PaymentType = payment,
-    //         Price = model.Price,
-    //         Seen = model.Seen,
-    //         Store = model.Store
-    //     };
-    // }
 }
-    
-public record CreateTransactionRequest    
+
+public record TransactionRequest    
 {
     public string LinkedUserId { get; init; } = String.Empty;
-    public string Description { get; init; } = String.Empty;
-    public string Store { get; init; } = String.Empty; 
-    public double Price { get; init; }
-    public string? Date { get; init; } = String.Empty;
-    public string Category { get; init; } = String.Empty;
-    public string PaymentType { get; init; } = String.Empty;
-    public bool Seen { get; init; }
-    public static TransactionModel ToTransactionModel(CreateTransactionRequest request)
+    public string? Description { get; init; }
+    public string? Store { get; init; }
+    public string? Price { get; init; }
+    public string? Date { get; init; }
+    public string? Category { get; init; }
+    public string? PaymentType { get; init; }
+    public string? Seen { get; init; }
+    public static TransactionModel ToTransactionModelPatch(TransactionRequest request)
+    {
+        bool isDateValid = DateTime.TryParse(request.Date, out DateTime date);
+        if (request.Date is not null && !isDateValid)
+            throw new RequestException("Invalid date");
+        bool isPriceValid = Double.TryParse(request.Price, out double price);
+        if (request.Price is not null && !isPriceValid)
+            throw new RequestException("Invalid price");
+        bool isSeenValid = Boolean.TryParse(request.Seen, out bool seen);
+        if (request.Seen is not null && !isSeenValid)
+            throw new RequestException("Invalid seen");
+
+        price = !request.Category.Equals("income") ? price * -1 : price;
+
+        return new()
+        {
+           Category = request.Category,
+           PaymentType = request.PaymentType,
+           Description = request.Description,
+           Store = request.Store,
+           Date = isDateValid ? date : null,
+           Price = isPriceValid ? price : null,
+           Seen = isSeenValid ? seen : null
+        };
+    }
+    
+    public static TransactionModel ToTransactionModelCreate(TransactionRequest request)
     {
         if (String.IsNullOrEmpty(request.LinkedUserId))
             throw new RequestException("Missing user id");
-        if (request.Price == 0)
-            throw new RequestException("Missing price");
-        var isDateCorrect = DateTime.TryParse(request.Date, out DateTime date);
+        var isDateValid = DateTime.TryParse(request.Date, out DateTime date);
         if (String.IsNullOrEmpty(request.Date))
             throw new RequestException("Missing date");
-        if (!isDateCorrect)
-            throw new RequestException("invalid date");
+        if (!isDateValid)
+            throw new RequestException("Invalid date");
+        var isPriceValid = Double.TryParse(request.Price, out Double price);
+        if (String.IsNullOrEmpty(request.Price))
+            throw new RequestException("Missing price");
+        if (!isPriceValid)
+            throw new RequestException("Invalid price");
+        bool isSeenValid = Boolean.TryParse(request.Seen, out bool seen);
+        if (request.Seen is not null && !isSeenValid)
+            throw new RequestException("Invalid seen");
         if (String.IsNullOrEmpty(request.Category))
             throw new RequestException("Missing category");
         if (String.IsNullOrEmpty(request.PaymentType))
             throw new RequestException("Missing payment type");
+
+        price = !request.Category.Equals("income") ? price * -1 : price;
+
         return new()
         {
            LinkedUserId = request.LinkedUserId,
-           Category = request.Category,
+           Category = request.Category ?? String.Empty,
+           PaymentType = request.PaymentType ?? String.Empty,
+           Description = request.Description ?? String.Empty,
+           Store = request.Store ?? String.Empty,
            Date = date,
-           Payment = request.PaymentType,
-           Description = request.Description,
-           Price = request.Price,
-           Seen = request.Seen,
-           Store = request.Store 
+           Price = price,
+           Seen = isSeenValid ? seen : false
         };
     }
 }
@@ -103,50 +121,3 @@ public record TransactionResponse
     public string PaymentType { get; init; } = String.Empty;
     public bool Seen { get; init; }
 }
-//     public record BalanceModel
-//     {
-//         public double Income { get; init; }
-//         public double Outcome { get; init; }
-//         public DateTime FromDate { get; init; }
-//         public DateTime ToDate { get; init; }
-//         public static void ToBalanceDto(BalanceModel model, out BalanceDto dto)
-//         {
-//             dto = new()
-//             {
-//                 FromDate = model.FromDate.ToString("o"),
-//                 ToDate = model.ToDate.ToString("o"),
-//                 Income = model.Income,
-//                 Outcome = model.Outcome
-//             };
-//         }
-//     }
-
-//     public record TransactionCategoryModel
-//     {
-//         public string CategoryName { get; set; }
-//         public double Total { get; set; }
-//         public static void ToCategoryMonthDto(TransactionCategoryModel model, out TransactionCategoryDto dto)
-//         {
-//             dto = new()
-//             {
-//                 CategoryName = model.CategoryName,
-//                 Total = model.Total
-//             };
-//         }
-//     }
-
-//     public record TransactionMonthModel
-//     {
-//         public int Year { get; set; }
-//         public int Month { get; set; }
-//         public double Total { get; set; }
-//         public static void ToTransactionMonthDto(TransactionMonthModel model, out TransactionMonthDto dto)
-//         {
-//             dto = new()
-//             {
-//                 Year = model.Year,
-//                 Month = model.Month,
-//                 Total = model.Total
-//             };
-//         }
-//     }

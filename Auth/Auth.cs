@@ -2,7 +2,7 @@ using System.Text;
 using Microsoft.Extensions.Primitives;
 
 namespace AccountyMinAPI.Auth;
-internal static class Auth
+public static class Auth
 {
     internal static string SecretKey = "6ceccd7405ef4b00b2630009be568cfa";
     internal static byte[] GenerateSecretByte() => 

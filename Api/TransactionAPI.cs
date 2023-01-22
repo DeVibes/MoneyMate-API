@@ -4,48 +4,59 @@ namespace AccountyMinAPI.Api;
 
 public static class TransactionsAPI
 {
-//     private static IResult MissingCategoryBadRequest => Results.BadRequest("Wrong category");
-//     private static IResult MissingPaymentTypeBadRequest => Results.BadRequest("Wrong payment type");
-//     public static async Task<IResult> GetAllTransactions(ITransactionRepository repo, HttpRequest request)
-//     {
-//         try
-//         {
-//             var filters = TransactionsFilters.ReadFiltersFromQuery(request);
-//             var (count, transactions) = await repo.GetAllTransactions(filters);
-//             var transactionsDto = new List<TransactionGetDto>();
-//             foreach (var transaction in transactions)
-//             {
-//                 TransactionModel.ToTransactionGetDto(transaction, out TransactionGetDto dto);
-//                 transactionsDto.Add(dto);
-//             }
-//             return Results.Ok(new
-//             {
-//                 itemsCount = count,
-//                 page = filters.PageNumber,
-//                 transactions = transactionsDto
-//             });
-//         }
-//         catch (NotFoundException)
-//         {
-//             return Results.NotFound("No transactions exists");
-//         }
-//         catch (System.Exception ex)
-//         {
-//             return Results.Problem(ex.Message);
-//         }
-//     }
-
-    public static async Task<IResult> GetTransactionById(string transactionId, ITransactionRepository repository)
+    public static async Task<IResult> GetAllTransactions(
+        string accountId,
+        ITransactionRepository transactionRepository, 
+        IAccountRepository accountRepository, 
+        HttpRequest request)
     {
         try
         {
-            TransactionModel transaction = await repository.GetTransactionById(transactionId);
+            if (String.IsNullOrEmpty(accountId))
+                throw new RequestException("Account id missing");
+            IEnumerable<string> accountUsers = await accountRepository.GetAccountUsers(accountId);
+            TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
+            filters.Users = accountUsers;
+            var (count, transactions) = await transactionRepository.GetAllTransactions(filters);
+            List<TransactionResponse> transactionsPayload = transactions
+                .Select(TransactionModel.ToTransactionResponse)
+                .ToList();
+            return Results.Ok(new
+            {
+                itemsCount = count,
+                page = filters.PageNumber,
+                transactions = transactionsPayload
+            });
+        }
+        catch (RequestException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+        catch (ServerException ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
+
+    public static async Task<IResult> GetTransactionById(
+        string transactionId, 
+        ITransactionRepository transactionRepository)
+    {
+        try
+        {
+            TransactionModel transaction = await transactionRepository.GetTransactionById(transactionId);
             TransactionResponse payload = TransactionModel.ToTransactionResponse(transaction);
             return Results.Ok(payload);
         }
-        catch (NotFoundException ex)
+        catch (UserException ex)
         {
-            return Results.NotFound(ex.Message);
+            if (ex is NotFoundException)
+                return Results.NotFound(ex.Message);
+            return Results.BadRequest(ex.Message);
         }
         catch (ServerException ex)
         {
@@ -57,15 +68,15 @@ public static class TransactionsAPI
         }
     }
 
-    public static async Task<IResult> CreateTransaction(string accountId, 
-        [FromBody]CreateTransactionRequest requestBody, 
+    public static async Task<IResult> CreateTransaction(
+        string accountId, 
+        [FromBody]TransactionRequest requestBody, 
         ITransactionRepository transactionRepository,
-        IAccountRepository accountRepository    
-    )
+        IAccountRepository accountRepository)
     {
         try
         {
-            TransactionModel model = CreateTransactionRequest.ToTransactionModel(requestBody);
+            TransactionModel model = TransactionRequest.ToTransactionModelCreate(requestBody);
             await accountRepository.ValidateTransactionData(accountId, model);
             TransactionModel createdTransaction = await transactionRepository.InsertTransaction(model);
             TransactionResponse payload = TransactionModel.ToTransactionResponse(createdTransaction);
@@ -85,162 +96,150 @@ public static class TransactionsAPI
         }
     }
 
-//     public static async Task<IResult> DeleteTransaction(string id, ITransactionRepository repo)
-//     {
-//         try
-//         {
-//             await repo.DeleteTransactionById(id);
-//             return Results.NoContent();
-//         }
-//         catch (NotFoundException)
-//         {
-//             return Results.NotFound($"ID - {id} was not found");
-//         }
-//         catch (System.Exception ex)
-//         {
-//             return Results.Problem(ex.Message);
-//         }
-//     }
+    public static async Task<IResult> DeleteTransaction(
+        string transactionId, 
+        ITransactionRepository transactionRepository)
+    {
+        try
+        {
+            await transactionRepository.DeleteTransactionById(transactionId);
+            return Results.NoContent();
+        }
+        catch (NotFoundException ex)
+        {
+            return Results.NotFound(ex.Message);
+        }
+        catch (ServerException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
 
-//     public static async Task<IResult> UpdateTransaction(string id, TransactionPostDto transactionDto, ITransactionRepository repo,
-//         ICategoryRepository catRepo, IPaymentTypeRepository paymentRepo
-//     )
-//     {
-//         // try
-//         // {
-//         //     var existingCategories = await catRepo.GetAllCategories();
-//         //     var existingPaymentTypes = await paymentRepo.GetAllPaymentTypes();
-//         //     var mappingResponse = TransactionPostDto.ToTransactionModel(transactionDto, 
-//         //         existingCategories, existingPaymentTypes, out TransactionModel transaction);
-//         //     switch (mappingResponse)
-//         //     {
-//         //         case MappingResponse.OK:
-//         //             await repo.UpdateTransactionById(id, transaction);
-//         //             return Results.NoContent();
-//         //         case MappingResponse.MISSING_PRICE:
-//         //             return Results.BadRequest("Missing price");
-//         //         case MappingResponse.MISSING_DATE:
-//         //             return Results.BadRequest("Missing date");
-//         //         case MappingResponse.MISSING_CATEGORY:
-//         //             return Results.BadRequest("Missing category");
-//         //         case MappingResponse.MISSING_PAYMENT:
-//         //             return Results.BadRequest("Missing payment");
-//         //         case MappingResponse.CATEGORY_NOT_EXISTS:
-//         //             return Results.BadRequest(new 
-//         //             {
-//         //                 Message = "Invalid category, existing categories:",
-//         //                 Types = existingCategories.Select(cat => cat.Name)
-//         //             });
-//         //         case MappingResponse.PAYMENT_NOT_EXISTS:
-//         //             return Results.BadRequest(new 
-//         //             {
-//         //                 Message = "Invalid payment type, existing types:",
-//         //                 Types = existingPaymentTypes.Select(type => type.Name)
-//         //             });
-//         //         case MappingResponse.INVALID_DATE:
-//         //             return Results.BadRequest("Invalid date");
-//         //         default:
-//         //             return Results.BadRequest("Something went wrong");
-//         //     }
-//         // }
-//         // catch (Exception ex)
-//         // {
-//         //     return Results.Problem(ex.Message);
-//         // }
-//         return Results.Problem("Not supporeted yet");
-//     }
-
-//     public static async Task<IResult> PatchTransaction(string id, bool seen, ITransactionRepository transactionRepository)
-//     {
-//         //TODO implement rest of the PATCH
-//         try
-//         {
-//             await transactionRepository.PatchSeenStatus(id, seen);
-//             return Results.Ok();
-//         }
-//         catch (NotFoundException)
-//         {
-//             return Results.NotFound($"ID - {id} was not found");
-//         }
-//         catch (System.Exception ex)
-//         {
-//             return Results.Problem(ex.Message);
-//         }
-//         //     try
-//         //     {
-//         //         var (mappingResult, mappingErrorIfExists) = TransactionPatchDto.ToTransactionModel(transactionDto, out TransactionModel transaction);
-//         //         if (mappingResult)
-//         //         {
-//         //             var categoryId = transaction.CategoryId;
-//         //             if (categoryId is not null)
-//         //             {
-//         //                 var existingCategoriesId = await catRepo.GetAllCategories();
-//         //                 // if (!existingCategoriesId.ToList().Exists(cat => cat.Item1 == categoryId ))
-//         //                 //     return MissingCategoryBadRequest;
-//         //             }
-//         //             var paymentTypeId = transaction.PaymentTypeId;
-//         //             if (paymentTypeId is not null)
-//         //             {
-//         //                 var existingPaymentsTypeId = await payRepo.GetAllPaymentTypes();
-//         //                 // if (!existingPaymentsTypeId.ToList().Exists(paymentType => paymentType.Item1 == paymentTypeId ))
-//         //                 //     return MissingPaymentTypeBadRequest;
-//         //             }
-//         //             await repo.PatchTransaction(id, transaction);
-//         //             return Results.NoContent();
-//         //         }
-//         //         else
-//         //             return Results.BadRequest(mappingErrorIfExists);
-//         //     }
-//         //     catch (NotFoundException)
-//         //     {
-//         //         return Results.NotFound($"ID - {id} was not found");
-//         //     }
-//         //     catch (System.Exception ex)
-//         //     {
-//         //         return Results.Problem(ex.Message);
-//         //     }
-//     }
+    public static async Task<IResult> PatchTransaction(
+        string accountId, 
+        string transactionId, 
+        TransactionRequest request,
+        IAccountRepository accountRepository,
+        ITransactionRepository transactionRepository)
+    {
+        try
+        {
+            TransactionModel model = TransactionRequest.ToTransactionModelPatch(request);
+            await accountRepository.ValidateTransactionData(accountId, model);
+            TransactionModel updatedTransaction = await transactionRepository.EditTransaction(transactionId, model);
+            TransactionResponse payload = TransactionModel.ToTransactionResponse(updatedTransaction);
+            return Results.Ok(payload);
+        }
+        catch (UserException ex)
+        {
+            if (ex is NotFoundException)
+                return Results.NotFound(ex.Message);
+            return Results.BadRequest(ex.Message);
+        }
+        catch (ServerException ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
     
-//     public static async Task<IResult> GetMonthlyByCategory(ITransactionRepository repo, HttpRequest request)
-//     {
-//         try
-//         {
-//             var filters = TransactionsFilters.ReadFiltersFromQuery(request);
-//             var result = await repo.GetMonthlyByCategory(filters);
-//             return Results.Ok(result);
-//         }
-//         catch (System.Exception ex)
-//         {
-//             return Results.Problem(ex.Message);
-//         }
-//     }
+    public static async Task<IResult> GetMonthlySummary(
+        string accountId,
+        IAccountRepository accountRepository,
+        ITransactionRepository transactionRepository, 
+        HttpRequest request)
+    {
+        try
+        {
+            if (String.IsNullOrEmpty(accountId))
+                throw new RequestException("Account id missing");
+            IEnumerable<string> accountUsers = await accountRepository.GetAccountUsers(accountId);
+            TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
+            filters.Users = accountUsers;
+            IEnumerable<MonthlyCategorySummaryModel> monthSummary = await transactionRepository.GetMonthlySummary(filters);
+            IEnumerable<MonthlyCategorySummaryResponse> payload = monthSummary.Select(MonthlyCategorySummaryModel.ToResponse);
+            return Results.Ok(payload);
+        }
+        catch (RequestException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+        catch (ServerException ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
 
-//     public static async Task<IResult> GetYearlySumByMonth(ITransactionRepository repo, HttpRequest request)
-//     {
-//         try
-//         {
-//             var filters = TransactionsFilters.ReadFiltersFromQuery(request);
-//             var result = await repo.GetYearlySumByMonth(filters);
-//             return Results.Ok(result);
-//         }
-//         catch (System.Exception ex)
-//         {
-//             return Results.Problem(ex.Message);
-//         }
-//     }
+    public static async Task<IResult> GetYearlySumByMonth(
+        string accountId,
+        IAccountRepository accountRepository,
+        ITransactionRepository transactionRepository, 
+        HttpRequest request)
+    {
+        try
+        {
+            if (String.IsNullOrEmpty(accountId))
+                throw new RequestException("Account id missing");
+            IEnumerable<string> accountUsers = await accountRepository.GetAccountUsers(accountId);
+            TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
+            filters.Users = accountUsers;
+            IEnumerable<YearlySummaryModel> yearlySummary = await transactionRepository.GetYearlySumByMonth(filters);
+            IEnumerable<YearlySummaryResponse> payload = yearlySummary.Select(YearlySummaryModel.ToResponse);
+            return Results.Ok(payload);
+        }
+        catch (RequestException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+        catch (ServerException ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
     
-//     public static async Task<IResult> GetBalance(ITransactionRepository repo, HttpRequest request)
-//     {
-//         try
-//         {
-//             var filters = TransactionsFilters.ReadFiltersFromQuery(request);
-//             BalanceModel monthlyBalance = await repo.GetMonthlyBalance(filters);
-//             BalanceModel.ToBalanceDto(monthlyBalance, out BalanceDto balanceDto);
-//             return Results.Ok(balanceDto);
-//         }
-//         catch (System.Exception ex)
-//         {
-//             return Results.Problem(ex.Message);
-//         }
-//     }
+    public static async Task<IResult> GetAccountBalance(
+        string accountId,
+        IAccountRepository accountRepository,
+        ITransactionRepository transactionRepository, 
+        HttpRequest request)
+    {
+        try
+        {
+            if (String.IsNullOrEmpty(accountId))
+                throw new RequestException("Account id missing");
+            IEnumerable<string> accountUsers = await accountRepository.GetAccountUsers(accountId);
+            TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
+            filters.Users = accountUsers;
+            BalanceModel monthlyBalance = await transactionRepository.GetMonthlyBalance(filters);
+            BalanceResponse payload = BalanceModel.ToResponse(monthlyBalance);
+            return Results.Ok(payload);
+        }
+        catch (RequestException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+        catch (ServerException ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+        catch (System.Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
+    }
 }

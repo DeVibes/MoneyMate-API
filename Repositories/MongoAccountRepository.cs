@@ -172,21 +172,46 @@ public class MongoAccountRepository: IAccountRepository
 
     public async Task ValidateTransactionData(string accountId, TransactionModel model)
     {
-        var userfilter = filterBuilder.Eq(account => account.Id, accountId) &
-            filterBuilder.Where(acc => acc.AccountUsers.Contains(model.LinkedUserId));
-        var categoryfilter = filterBuilder.Eq(account => account.Id, accountId) &
-            filterBuilder.Where(acc => acc.AccountCategories.Contains(model.Category));
-        var paymentfilter = filterBuilder.Eq(account => account.Id, accountId) &
-            filterBuilder.Where(acc => acc.AccountPaymentTypes.Contains(model.Payment));
-        var result = await accountCollection.Find(userfilter).FirstOrDefaultAsync();
-        if (result is null)
-            throw new RequestException($"Account '{accountId}' and user '{model.LinkedUserId}' are not linked");
-        result = await accountCollection.Find(categoryfilter).FirstOrDefaultAsync();
-        if (result is null)
-            throw new RequestException($"Account '{accountId}' and category '{model.Category}' are not linked");
-        result = await accountCollection.Find(paymentfilter).FirstOrDefaultAsync();
-        if (result is null)
-            throw new RequestException($"Account '{accountId}' and payment type '{model.Payment}' are not linked");
+        if (!String.IsNullOrEmpty(model.LinkedUserId))
+        {
+            var userfilter = filterBuilder.Eq(account => account.Id, accountId) &
+                filterBuilder.Where(acc => acc.AccountUsers.Contains(model.LinkedUserId));
+            var result = await accountCollection.Find(userfilter).FirstOrDefaultAsync();
+            if (result is null)
+                throw new RequestException($"Account '{accountId}' and user '{model.LinkedUserId}' are not linked");
+        }
+        if (!String.IsNullOrEmpty(model.Category))
+        {
+            var categoryfilter = filterBuilder.Eq(account => account.Id, accountId) &
+                filterBuilder.Where(acc => acc.AccountCategories.Contains(model.Category));
+            var result = await accountCollection.Find(categoryfilter).FirstOrDefaultAsync();
+            if (result is null)
+                throw new RequestException($"Account '{accountId}' and category '{model.Category}' are not linked");
+        }
+        if (!String.IsNullOrEmpty(model.PaymentType))
+        {
+            var paymentfilter = filterBuilder.Eq(account => account.Id, accountId) &
+                filterBuilder.Where(acc => acc.AccountPaymentTypes.Contains(model.PaymentType));
+            var result = await accountCollection.Find(paymentfilter).FirstOrDefaultAsync();
+            if (result is null)
+                throw new RequestException($"Account '{accountId}' and payment type '{model.PaymentType}' are not linked");
+        }
+    }
+
+
+
+    public async Task<IEnumerable<string>> GetAccountUsers(string accountId)
+    {
+        var accountFilter = filterBuilder.Eq(acc => acc.Id, accountId);
+        var usersProjection = projectionBuilder
+            .Expression(acc => acc.AccountUsers);
+            
+        IEnumerable<string>? users = await accountCollection
+            .Find(accountFilter)
+            .Project(usersProjection)
+            .FirstOrDefaultAsync();
+
+        return users is null ? Enumerable.Empty<string>() : users;
     }
 
     private void CreateUniqueIndexOnField()

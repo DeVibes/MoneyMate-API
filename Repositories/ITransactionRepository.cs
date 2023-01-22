@@ -2,14 +2,12 @@ namespace AccountyMinAPI.Repositories;
 
 public interface ITransactionRepository
 {
-//     Task<(long, IEnumerable<TransactionModel>)> GetAllTransactions(TransactionsFilters filters);
+    Task<(long, IEnumerable<TransactionModel>)> GetAllTransactions(TransactionsFilters filters);
     Task<TransactionModel> GetTransactionById(string id);
     Task<TransactionModel> InsertTransaction(TransactionModel transaction);
-//     Task DeleteTransactionById(string id);
-//     Task UpdateTransactionById(string id, TransactionModel transaction);
-//     Task PatchTransaction(string id, TransactionModel transaction);
-//     Task PatchSeenStatus(string id, bool seen);
-//     Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters);
-//     Task<IEnumerable<TransactionCategoryModel>> GetMonthlyByCategory(TransactionsFilters filters);
-//     Task<IEnumerable<TransactionMonthModel>> GetYearlySumByMonth(TransactionsFilters filters);
+    Task DeleteTransactionById(string transactionId);
+    Task<TransactionModel> EditTransaction(string transactionId, TransactionModel model);
+    Task<IEnumerable<MonthlyCategorySummaryModel>> GetMonthlySummary(TransactionsFilters filters);
+    Task<IEnumerable<YearlySummaryModel>> GetYearlySumByMonth(TransactionsFilters filters);
+    Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters);
 }

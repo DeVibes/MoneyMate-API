@@ -8,42 +8,92 @@ namespace AccountyMinAPI.Repositories;
 public class MongoTransactionRepository : ITransactionRepository
 {
     private readonly IMongoCollection<TransactionModel> transactionCollection;
-    private readonly FilterDefinitionBuilder<TransactionModel> filterBuilder = Builders<TransactionModel>.Filter;
-    private readonly ProjectionDefinitionBuilder<TransactionModel> projectionBuilder = Builders<TransactionModel>.Projection;
+    private readonly IMongoCollection<AccountModel> accountCollection;
+    private readonly FilterDefinitionBuilder<TransactionModel> filterBuilder = 
+        Builders<TransactionModel>.Filter;
+    private readonly FilterDefinitionBuilder<AccountModel> accountfilterBuilder = 
+        Builders<AccountModel>.Filter;
+    private readonly ProjectionDefinitionBuilder<TransactionModel> projectionBuilder = 
+        Builders<TransactionModel>.Projection;
 
     public MongoTransactionRepository(IMongoClient mongoClient, IConfiguration configuration)
     {
         var database = mongoClient.GetDatabase(configuration["Database:Current"]);
         transactionCollection = database.GetCollection<TransactionModel>("transactions");
+        accountCollection = database.GetCollection<AccountModel>("accounts");
     }
-//     public async Task DeleteTransactionById(string id)
-//     {
-//         var _id = new ObjectId(id);
-//         var filter = filterBuilder.Eq(transaction => transaction.Id, _id);
-//         var deleteResult = await transactionCollection.DeleteOneAsync(filter);
-//         // if (deleteResult.DeletedCount == 0)
-//         //     throw new Exception();
-//     }
 
-//     public async Task<(long, IEnumerable<TransactionModel>)> GetAllTransactions(TransactionsFilters filters)
-//     {
-//         var filter = filterBuilder.Empty;
-//         if (filters.FromDate != null && filters.ToDate != null)
-//         {
-//             var dateFilter = filterBuilder.And(filterBuilder.Gte(x => x.Date, filters.FromDate),
-//             filterBuilder.Lte(x => x.Date, filters.ToDate));
-//             filter &= dateFilter;
-//         }
-//         var allTransactions = transactionCollection.Find(filter)
-//             .SortByDescending(doc => doc.Date);
+    public async Task DeleteTransactionById(string transactionId)
+    {
+        var filter = filterBuilder.Eq(transaction => transaction.Id, transactionId);
+        var deleteResult = await transactionCollection.DeleteOneAsync(filter);
+        if (deleteResult.DeletedCount == 0)
+        {
+            // log error
+            throw new NotFoundException($"ID - {transactionId} was not found");
+        }
+    }
 
-//         var count = await allTransactions.CountDocumentsAsync();
-//         var items = await allTransactions.Skip(filters.PageNumber * 10)
-//             .Limit(10)
-//             .ToListAsync();
+    public async Task<TransactionModel> EditTransaction(string transactionId, TransactionModel model)
+    {
+        var filter = filterBuilder.Eq(transaction => transaction.Id, transactionId);
+        var patchDefinition = Builders<TransactionModel>.Update;
+        var fields = new List<UpdateDefinition<TransactionModel>>();
+        foreach (var prop in model.GetType().GetProperties())
+        {
+            var propName = prop.Name;
+            if (propName == "Id") continue;
+            if (propName == "LinkedUserId") continue;
+            var propValue = prop.GetValue(model);
+            if (propValue is not null)
+                fields.Add(patchDefinition.Set(propName, propValue));
+        }
+        var patchResult = await transactionCollection.UpdateOneAsync(filter, patchDefinition.Combine(fields));
+        if (patchResult.MatchedCount == 0)
+        {
+            // log error
+            throw new NotFoundException($"transaction '{transactionId}' not found");
+        }
+        TransactionModel updatedModel = await transactionCollection.Find(filter)
+            .FirstOrDefaultAsync();
+        return updatedModel;
+    }
 
-//         return (count, items);
-//     }
+    public async Task<(long, IEnumerable<TransactionModel>)> GetAllTransactions(
+        TransactionsFilters filters)
+    {
+        if (filters.Users == Enumerable.Empty<string>())
+            return (0, Enumerable.Empty<TransactionModel>());
+        var filter = filterBuilder.Empty;
+        var dateFilterUser = filterBuilder.And(
+            filterBuilder.Gte(x => x.Date, filters.FromDate),
+            filterBuilder.Lte(x => x.Date, filters.ToDate),
+            filterBuilder.In("LinkedUserId", filters.Users));
+        filter &= dateFilterUser;
+        if (filters.Category is not null)
+        {
+            var catFilter = filterBuilder.Eq(tr => tr.Category, filters.Category);
+            filter &= catFilter;
+        }
+        if (filters.PaymentType is not null)
+        {
+            var paymentTypeFilter = filterBuilder.Eq(tr => tr.PaymentType, filters.PaymentType);
+            filter &= paymentTypeFilter;
+        }
+        if (filters.Seen is not null)
+        {
+            var seenTypeFilter = filterBuilder.Eq(tr => tr.Seen, filters.Seen);
+            filter &= seenTypeFilter;
+        }
+        var allTransactions = transactionCollection.Find(filter)
+            .SortByDescending(doc => doc.Date);
+        var count = await allTransactions.CountDocumentsAsync();
+        var items = await allTransactions.Skip(filters.PageNumber * 10)
+            .Limit(10)
+            .ToListAsync();
+
+        return (count, items);
+    }
 
     public async Task<TransactionModel> GetTransactionById(string transactionId)
     {
@@ -63,106 +113,96 @@ public class MongoTransactionRepository : ITransactionRepository
         return transaction;
     }
 
-//     public Task PatchTransaction(string id, TransactionModel transaction)
-//     {
-//         throw new NotImplementedException();
-//     }
+    public async Task<IEnumerable<MonthlyCategorySummaryModel>> GetMonthlySummary(TransactionsFilters filters)
+    {
+        if (filters.Users == Enumerable.Empty<string>())
+            return Enumerable.Empty<MonthlyCategorySummaryModel>();
+        var filter = filterBuilder.Empty;
+        var monthlyNonIncomefilter = filterBuilder.And(
+            filterBuilder.Gte(x => x.Date, filters.FromDate),
+            filterBuilder.Lte(x => x.Date, filters.ToDate),
+            filterBuilder.In("LinkedUserId", filters.Users),
+            filterBuilder.Ne(x => x.Category, "income"));
+        filter &= monthlyNonIncomefilter;
 
-//     public Task UpdateTransactionById(string id, TransactionModel transaction)
-//     {
-//         throw new NotImplementedException();
-//     }
+        var categoriesedTransactions = await transactionCollection.Aggregate()
+            .Match(filter)
+            .Group(
+                x => x.Category,
+                group => new MonthlyCategorySummaryModel
+                {
+                    Category= group.Key,
+                    Total = group.Sum(x => Math.Abs(x.Price.Value))
+                })
+            .ToListAsync();
+        return categoriesedTransactions;
+    }
 
-//     public async Task PatchSeenStatus(string id, bool seen)
-//     {
-//         var _id = new ObjectId(id);
-//         var filter = filterBuilder.Eq(transaction => transaction.Id, _id);
-//         var update = Builders<TransactionModel>.Update.Set("Seen", seen);
-//         var result = await transactionCollection.UpdateOneAsync(filter, update);
-//         // if (result.MatchedCount == 0)
-//         //     throw new NotFoundException();
-//     }
+    public async Task<IEnumerable<YearlySummaryModel>> GetYearlySumByMonth(TransactionsFilters filters)
+    {
+        if (filters.Users == Enumerable.Empty<string>())
+            return Enumerable.Empty<YearlySummaryModel>();
+        var filter = filterBuilder.Empty;
+        var yearlyNonIncomefilter = filterBuilder.And(
+            filterBuilder.Gte(x => x.Date, filters.FromDate),
+            filterBuilder.Lte(x => x.Date, filters.ToDate),
+            filterBuilder.In("LinkedUserId", filters.Users),
+            filterBuilder.Ne(x => x.Category, "income"));
+        filter &= yearlyNonIncomefilter;
 
-//     public async Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters)
-//     {
-//         var fromDate = filters.FromDate.HasValue ? filters.FromDate.Value : DateTime.MinValue;
-//         var toDate = filters.ToDate.HasValue ? filters.ToDate.Value : DateTime.MinValue;
+        var yearlyTransactions = await transactionCollection.Aggregate()
+            .Match(filter)
+            .Group(
+                x => new DateTime(x.Date.Value.Year, x.Date.Value.Month, 1),
+                group => new 
+                {
+                    Date = group.Key,
+                    Total = group.Sum(x => x.Price)
+                })
+            .Project(g => new YearlySummaryModel
+            {
+                Total = g.Total.Value,
+                Month = g.Date.Month,
+                Year = g.Date.Year
+            })
+            .SortBy(item => item.Year)
+            .ThenBy(item => item.Month)
+            .ToListAsync();
+        return yearlyTransactions;
+    }
 
-//         var monthlyNonIncomefilter = filterBuilder.Gte(x => x.Date, fromDate) &
-//             filterBuilder.Lte(x => x.Date, toDate);
+    public async Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters)
+    {
+        if (filters.Users == Enumerable.Empty<string>())
+            return new();
+        var filter = filterBuilder.Empty;
+        var dateNonIncomefilter = filterBuilder.And(
+            filterBuilder.Gte(x => x.Date, filters.FromDate),
+            filterBuilder.Lte(x => x.Date, filters.ToDate),
+            filterBuilder.In("LinkedUserId", filters.Users),
+            filterBuilder.Ne(x => x.Category, "income"));
+        filter &= dateNonIncomefilter;
 
-//         var categoriesedTransactions = await transactionCollection.Aggregate()
-//             .Match(monthlyNonIncomefilter)
-//             .Group(
-//                 x => x.Category.Name == "Income" ? "Income" : "MonthlySpent",
-//                 group => new
-//                 {
-//                     Category = group.Key,
-//                     Total = group.Sum(x => x.Price)
-//                 })
-//             .ToListAsync();
+        var categoriesedTransactions = await transactionCollection.Aggregate()
+            .Match(filter)
+            .Group(
+                x => x.Category == "income" ? "income" : "monthlySpent",
+                group => new
+                {
+                    Category = group.Key,
+                    Total = group.Sum(x => x.Price)
+                })
+            .ToListAsync();
 
-//         var income = categoriesedTransactions.Where(x => x.Category == "Income");
-//         var outcomes = categoriesedTransactions.Where(x => x.Category == "MonthlySpent");
+        var income = categoriesedTransactions.Where(x => x.Category == "income");
+        var outcomes = categoriesedTransactions.Where(x => x.Category == "monthlySpent");
         
-//         return new BalanceModel()
-//         {
-//             Income = income.Count() == 0 ? 0 : income.First().Total,
-//             Outcome = outcomes.Count() == 0 ? 0 : outcomes.First().Total,
-//             FromDate = fromDate,
-//             ToDate = toDate
-//         };
-//     }
-
-//     public async Task<IEnumerable<TransactionCategoryModel>> GetMonthlyByCategory(TransactionsFilters filters)
-//     {
-//         var fromDate = filters.FromDate.HasValue ? filters.FromDate.Value : DateTime.MinValue;
-//         var toDate = filters.ToDate.HasValue ? filters.ToDate.Value : DateTime.MinValue;
-
-//         var monthlyNonIncomefilter = filterBuilder.Gte(x => x.Date, fromDate) &
-//             filterBuilder.Lte(x => x.Date, toDate) & 
-//             filterBuilder.Ne(x => x.Category.Name, "Income");
-
-//         var categoriesedTransactions = await transactionCollection.Aggregate()
-//             .Match(monthlyNonIncomefilter)
-//             .Group(
-//                 x => x.Category.Name,
-//                 group => new TransactionCategoryModel
-//                 {
-//                     CategoryName = group.Key,
-//                     Total = group.Sum(x => Math.Abs(x.Price))
-//                 })
-//             .ToListAsync();
-//         return categoriesedTransactions;
-//     }
-    
-//     public async Task<IEnumerable<TransactionMonthModel>> GetYearlySumByMonth(TransactionsFilters filters)
-//     {
-//         var fromDate = filters.FromDate.HasValue ? filters.FromDate.Value : DateTime.MinValue;
-//         var toDate = filters.ToDate.HasValue ? filters.ToDate.Value : DateTime.MinValue;
-
-//         var yearlyNonIncomefilter = filterBuilder.Gte(x => x.Date, fromDate) &
-//             filterBuilder.Lte(x => x.Date, toDate) & 
-//             filterBuilder.Ne(x => x.Category.Name, "Income");
-
-//         var yearlyTransactions = await transactionCollection.Aggregate()
-//             .Match(yearlyNonIncomefilter)
-//             .Group(
-//                 x => new DateTime(x.Date.Year, x.Date.Month, 1),
-//                 group => new 
-//                 {
-//                     Date = group.Key,
-//                     Total = group.Sum(x => x.Price)
-//                 })
-//             .Project(g => new TransactionMonthModel
-//             {
-//                 Total = g.Total,
-//                 Month = g.Date.Month,
-//                 Year = g.Date.Year
-//             })
-//             .SortBy(item => item.Year)
-//             .ThenBy(item => item.Month)
-//             .ToListAsync();
-//         return yearlyTransactions;
-//     }
+        return new BalanceModel()
+        {
+            Income = income.Count() == 0 ? 0 : income.First().Total.Value,
+            Outcome = outcomes.Count() == 0 ? 0 : outcomes.First().Total.Value,
+            FromDate = filters.FromDate,
+            ToDate = filters.ToDate
+        };
+    }
 }
