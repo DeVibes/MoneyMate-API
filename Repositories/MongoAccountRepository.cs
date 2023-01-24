@@ -7,11 +7,16 @@ public class MongoAccountRepository: IAccountRepository
     private readonly IMongoCollection<AccountModel> accountCollection;
     private readonly FilterDefinitionBuilder<AccountModel> filterBuilder = Builders<AccountModel>.Filter;
     private readonly ProjectionDefinitionBuilder<AccountModel> projectionBuilder = Builders<AccountModel>.Projection;
+    private readonly ILogger<MongoAccountRepository> _logger;
     private readonly int DUPLICATE_FIELD = 11000;
-    public MongoAccountRepository(IMongoClient mongoClient, IConfiguration configuration)
+    public MongoAccountRepository(
+        IMongoClient mongoClient, 
+        IConfiguration configuration,
+        ILogger<MongoAccountRepository> logger)
     {
         var database = mongoClient.GetDatabase(configuration["Database:Current"]);
         accountCollection = database.GetCollection<AccountModel>("accounts");
+        _logger = logger;
         CreateUniqueIndexOnField();
     }
 
@@ -23,7 +28,7 @@ public class MongoAccountRepository: IAccountRepository
             var createdAccountFilter = filterBuilder.Eq(acc => acc.AccountName, account.AccountName);
             var createdAccount = await accountCollection.Find(createdAccountFilter).FirstOrDefaultAsync();
             if (createdAccount == null)
-                throw new ServerException($"Failed inserting account name '{account.AccountName}'");
+                throw new ServerException($"Failed insertinginserting account name '{account.AccountName}'");
             return createdAccount;
         }
         catch (MongoWriteException ex)
@@ -47,7 +52,7 @@ public class MongoAccountRepository: IAccountRepository
         AccountModel account = await accountCollection.Find(filter).SingleOrDefaultAsync();
         if (account is null)
         {
-            // log error
+            _logger.LogError($"Account id '{accountId}' not found");
             throw new NotFoundException($"Account id '{accountId}' not found");
         }
         return account;
@@ -60,6 +65,7 @@ public class MongoAccountRepository: IAccountRepository
         if (deleteResult.DeletedCount == 0)
         {
             // log error
+
             throw new NotFoundException($"Account id '{accountId}' not found");
         }
     }
@@ -126,30 +132,30 @@ public class MongoAccountRepository: IAccountRepository
         return updatedModel;
     }
 
-    public async Task<AccountModel> AddAccountCategory(string accountId, CategoryModel model)
+    public async Task<AccountModel> AddAccountCategory(string accountId, string category)
     {
         var filter = filterBuilder.Eq(account => account.Id, accountId);
         var updateCategoriesDefine = Builders<AccountModel>.Update
-            .AddToSet(acc => acc.AccountCategories, model.CategoryName);
+            .AddToSet(acc => acc.AccountCategories, category);
         UpdateResult result = await accountCollection.UpdateOneAsync(filter, updateCategoriesDefine);
         if (result.MatchedCount == 0)
             throw new NotFoundException($"Account '{accountId}' not found");
         if (result.ModifiedCount == 0)
-            throw new AlreadyExistsException($"Account '{accountId}' already has category '{model.CategoryName}'");
+            throw new AlreadyExistsException($"Account '{accountId}' already has category '{category}'");
         AccountModel updatedModel = await accountCollection.Find(filter).FirstOrDefaultAsync();
         return updatedModel;
     }
 
-    public async Task<AccountModel> RemoveAccountCategory(string accountId, CategoryModel model)
+    public async Task<AccountModel> RemoveAccountCategory(string accountId, string category)
     {
         var filter = filterBuilder.Eq(account => account.Id, accountId);
         var updateCategoriesDefine = Builders<AccountModel>.Update
-            .Pull(acc => acc.AccountCategories, model.CategoryName);
+            .Pull(acc => acc.AccountCategories, category);
         UpdateResult result = await accountCollection.UpdateOneAsync(filter, updateCategoriesDefine);
         if (result.MatchedCount == 0)
             throw new NotFoundException($"Account '{accountId}' not found");
         if (result.ModifiedCount == 0)
-            throw new NotFoundException($"Account '{accountId}' doesnt have category '{model.CategoryName}'");
+            throw new NotFoundException($"Account '{accountId}' doesnt have category '{category}'");
         AccountModel updatedModel = await accountCollection.Find(filter).FirstOrDefaultAsync();
         return updatedModel;
     }

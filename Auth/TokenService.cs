@@ -9,7 +9,7 @@ public class TokenService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var key = Auth.GenerateSecretByte();
+        var key = AuthSecret.GenerateSecretByte();
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {

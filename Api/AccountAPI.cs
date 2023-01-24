@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace AccountyMinAPI.Api;
 public static class AccountAPI
 {
-    public static async Task<IResult> CreateAccount([FromBody]CreateAccountRequest requestBody, IAccountRepository repository)
+    public static async Task<IResult> CreateAccount([FromBody]AccountRequest requestBody, IAccountRepository repository)
     {
         try
         {
-            AccountModel model = CreateAccountRequest.ToAccountModel(requestBody);
+            AccountModel model = AccountRequest.ToAccountModelCreate(requestBody);
             AccountModel createdAccount = await repository.InsertAccount(model);
             AccountResponse payload = AccountModel.ToAccountResponse(createdAccount);
             return Results.Created(payload.Id, payload);
@@ -91,14 +91,14 @@ public static class AccountAPI
         }
     }
 
-    public static async Task<IResult> AssignUserToAccount(string accountId, [FromBody]PatchAccountUsersRequest requestBody, IAccountRepository repository)
+    public static async Task<IResult> AssignUserToAccount(string accountId, [FromBody]AccountUser requestBody, IAccountRepository repository)
     {
         try
         {
-            if(string.IsNullOrEmpty(requestBody.UserId))
-                throw new RequestException("Missing user id");
-            AccountModel updatedAccount = await repository.AssignUserToAccount(accountId, requestBody.UserId);
-            AccountUsersResponse payload = AccountModel.ToAccountUserResponse(updatedAccount);
+            if(string.IsNullOrEmpty(requestBody.Id))
+                throw new RequestException("Missing user");
+            AccountModel updatedAccount = await repository.AssignUserToAccount(accountId, requestBody.Id);
+            AccountResponse payload = AccountModel.ToAccountResponse(updatedAccount);
             return Results.Ok(payload);
         }
         catch (UserException ex)
@@ -117,14 +117,14 @@ public static class AccountAPI
         }
     }
 
-    public static async Task<IResult> DeassignUserFromAccount(string accountId, [FromBody]PatchAccountUsersRequest requestBody, IAccountRepository repository)
+    public static async Task<IResult> DeassignUserFromAccount(string accountId, [FromBody]AccountUser requestBody, IAccountRepository repository)
     {
         try
         {
-            if(string.IsNullOrEmpty(requestBody.UserId))
-                throw new RequestException("Missing user id");
-            AccountModel updatedAccount = await repository.DeassignUserToAccount(accountId, requestBody.UserId);
-            AccountUsersResponse payload =  AccountModel.ToAccountUserResponse(updatedAccount);
+            if(string.IsNullOrEmpty(requestBody.Id))
+                throw new RequestException("Missing user");
+            AccountModel updatedAccount = await repository.DeassignUserToAccount(accountId, requestBody.Id);
+            AccountResponse payload =  AccountModel.ToAccountResponse(updatedAccount);
             return Results.Ok(payload);
         }
         catch (UserException ex)
@@ -143,14 +143,14 @@ public static class AccountAPI
         }
     }
 
-    public static async Task<IResult> AssignPaymentTypeToAccount(string accountId, [FromBody]PatchAccountPaymentTypeRequest requestBody, IAccountRepository repository)
+    public static async Task<IResult> AssignPaymentTypeToAccount(string accountId, [FromBody]AccountPaymentType requestBody, IAccountRepository repository)
     {
         try
         {
-            if(string.IsNullOrEmpty(requestBody.PaymentTypeId))
+            if(string.IsNullOrEmpty(requestBody.Name))
                 throw new RequestException("Missing payment type");
-            AccountModel updatedAccount = await repository.AssignPaymentTypeToAccount(accountId, requestBody.PaymentTypeId);
-            AccountPaymentTypesResponse payload = AccountModel.ToAccountPaymentTypeResponse(updatedAccount);
+            AccountModel updatedAccount = await repository.AssignPaymentTypeToAccount(accountId, requestBody.Name);
+            AccountResponse payload = AccountModel.ToAccountResponse(updatedAccount);
             return Results.Ok(payload);
         }
         catch (UserException ex)
@@ -169,14 +169,14 @@ public static class AccountAPI
         }
     }
 
-    public static async Task<IResult> DeassignPaymentTypeFromAccount(string accountId, [FromBody]PatchAccountPaymentTypeRequest requestBody, IAccountRepository repository)
+    public static async Task<IResult> DeassignPaymentTypeFromAccount(string accountId, [FromBody]AccountPaymentType requestBody, IAccountRepository repository)
     {
         try
         {
-            if(string.IsNullOrEmpty(requestBody.PaymentTypeId))
+            if(string.IsNullOrEmpty(requestBody.Name))
                 throw new RequestException("Missing payment type");
-            AccountModel updatedAccount = await repository.DeassignPaymentTypeToAccount(accountId, requestBody.PaymentTypeId);
-            AccountPaymentTypesResponse payload = AccountModel.ToAccountPaymentTypeResponse(updatedAccount);
+            AccountModel updatedAccount = await repository.DeassignPaymentTypeToAccount(accountId, requestBody.Name);
+            AccountResponse payload = AccountModel.ToAccountResponse(updatedAccount);
             return Results.Ok(payload);
         }
         catch (UserException ex)
@@ -195,13 +195,14 @@ public static class AccountAPI
         }
     }
 
-    public static async Task<IResult> AddCategoryToAccount(string accountId, [FromBody]AccountCategoryRequest requestBody, IAccountRepository repository)
+    public static async Task<IResult> AddCategoryToAccount(string accountId, [FromBody]AccountCategory requestBody, IAccountRepository repository)
     {
         try
         {
-            CategoryModel model = AccountCategoryRequest.ToCategoryModel(requestBody);
-            AccountModel updatedAccount = await repository.AddAccountCategory(accountId, model);
-            AccountCategoriesResponse responseModel = AccountModel.ToAccountCategoryResponse(updatedAccount);
+            if(string.IsNullOrEmpty(requestBody.Name))
+                throw new RequestException("Missing category");
+            AccountModel updatedAccount = await repository.AddAccountCategory(accountId, requestBody.Name);
+            AccountResponse responseModel = AccountModel.ToAccountResponse(updatedAccount);
             return Results.Ok(responseModel);
         }
         catch (UserException ex)
@@ -220,13 +221,14 @@ public static class AccountAPI
         }
     }
 
-    public static async Task<IResult> RemoveCategoryFromAccount(string accountId, [FromBody]AccountCategoryRequest requestBody, IAccountRepository repository)
+    public static async Task<IResult> RemoveCategoryFromAccount(string accountId, [FromBody]AccountCategory requestBody, IAccountRepository repository)
     {
         try
         {
-            CategoryModel model = AccountCategoryRequest.ToCategoryModel(requestBody);
-            AccountModel updatedAccount = await repository.RemoveAccountCategory(accountId, model);
-            AccountCategoriesResponse payload = AccountModel.ToAccountCategoryResponse(updatedAccount);
+            if(string.IsNullOrEmpty(requestBody.Name))
+                throw new RequestException("Missing category");
+            AccountModel updatedAccount = await repository.RemoveAccountCategory(accountId, requestBody.Name);
+            AccountResponse payload = AccountModel.ToAccountResponse(updatedAccount);
             return Results.Ok(payload);
         }
         catch (UserException ex)
@@ -245,11 +247,11 @@ public static class AccountAPI
         }
     }
 
-    public static async Task<IResult> PatchAccountById(string accountId, [FromBody]PatchAccountRequest patchRequest, IAccountRepository repository)
+    public static async Task<IResult> PatchAccountById(string accountId, [FromBody]AccountRequest patchRequest, IAccountRepository repository)
     {
         try
         {
-            AccountModel model = PatchAccountRequest.ToAccountModel(patchRequest);
+            AccountModel model = AccountRequest.ToAccountModelPatch(patchRequest);
             AccountModel updatedAccount = await repository.EditAccount(accountId, model);
             AccountResponse payload = AccountModel.ToAccountResponse(updatedAccount);
             return Results.Ok(payload);

@@ -27,59 +27,34 @@ public record AccountModel
         return new AccountResponse()
         {
             Id = model.Id.ToString(),
-            AccountName = model.AccountName,
-            AccountUsers = model.AccountUsers,
-            AccountCategories = model.AccountCategories,
-            AccountPaymentTypes = model.AccountPaymentTypes,
-        };
-    }
-
-    public static AccountUsersResponse ToAccountUserResponse(AccountModel model)
-    {
-        if (model is null)
-            throw new ServerException($"Error in mapping {nameof(model)} to {nameof(AccountUsersResponse)}");
-        return new AccountUsersResponse()
-        {
-            AccountId = model.Id.ToString(),
-            AccountName = model.AccountName,
-            AccountUsers = model.AccountUsers
-        };
-    }
-    public static AccountPaymentTypesResponse ToAccountPaymentTypeResponse(AccountModel model)
-    {
-        if (model is null)
-            throw new ServerException($"Error in mapping {nameof(model)} to {nameof(AccountPaymentTypesResponse)}");
-        return new AccountPaymentTypesResponse()
-        {
-            AccountId = model.Id.ToString(),
-            AccountName = model.AccountName,
-            AccountPaymentTypes = model.AccountPaymentTypes
-        };
-    }
-
-    public static AccountCategoriesResponse ToAccountCategoryResponse(AccountModel model)
-    {
-        if (model is null)
-            throw new ServerException($"Error in mapping {nameof(model)} to {nameof(AccountCategoriesResponse)}");
-        return new AccountCategoriesResponse()
-        {
-            AccountId = model.Id.ToString(),
-            AccountName = model.AccountName,
-            AccountCategories = model.AccountCategories
+            AccountName = model.AccountName ?? String.Empty,
+            AccountUsers = model.AccountUsers ?? Enumerable.Empty<string>(),
+            AccountCategories = model.AccountCategories ?? Enumerable.Empty<string>(),
+            AccountPaymentTypes = model.AccountPaymentTypes ?? Enumerable.Empty<string>()
         };
     }
 }
 
-public record CreateAccountRequest
+public record AccountRequest
 {
-    public string AccountName { get; init; } = String.Empty;
-    public IEnumerable<string> AccountUsers { get; init; } = Enumerable.Empty<string>();
-    public IEnumerable<string> AccountCategories { get; init; } = Enumerable.Empty<string>();
-    public IEnumerable<string> AccountPaymentTypes { get; init; } = Enumerable.Empty<string>();
-    public static AccountModel ToAccountModel(CreateAccountRequest request)
+    public string? AccountName { get; set; }
+    public IEnumerable<string>? AccountUsers { get; set; }
+    public IEnumerable<string>? AccountCategories { get; set; }
+    public IEnumerable<string>? AccountPaymentTypes { get; set; }
+    public static AccountModel ToAccountModelCreate(AccountRequest request)
     {
         if (String.IsNullOrEmpty(request.AccountName))
             throw new RequestException("Missing account name");
+        return new()
+        {
+            AccountName = request.AccountName,
+            AccountUsers = request.AccountUsers ?? Enumerable.Empty<string>(),
+            AccountCategories = request.AccountCategories ?? Enumerable.Empty<string>(),
+            AccountPaymentTypes = request.AccountPaymentTypes ?? Enumerable.Empty<string>()
+        };
+    }
+    public static AccountModel ToAccountModelPatch(AccountRequest request)
+    {
         return new()
         {
             AccountName = request.AccountName,
@@ -88,30 +63,6 @@ public record CreateAccountRequest
             AccountPaymentTypes = request.AccountPaymentTypes
         };
     }
-}
-
-public record PatchAccountRequest
-{
-    public string? AccountName { get; init; }
-    public static AccountModel ToAccountModel(PatchAccountRequest request)
-    {
-        if (String.IsNullOrEmpty(request.AccountName))
-            throw new RequestException("Missing account name");
-        return new()
-        {
-            AccountName = request.AccountName
-        };
-    }
-}
-
-public record PatchAccountUsersRequest
-{
-    public string UserId { get; set; } = String.Empty;
-}
-
-public record PatchAccountPaymentTypeRequest
-{
-    public string PaymentTypeId { get; set; } = String.Empty;
 }
 
 public record AccountResponse
@@ -123,39 +74,20 @@ public record AccountResponse
     public IEnumerable<string> AccountPaymentTypes { get; init; } = Enumerable.Empty<string>();
 }
 
-public record AccountUsersResponse
+public record AccountUser
 {
-    public string AccountId { get; set; } = String.Empty;
-    public string AccountName { get; set; } = String.Empty;
-    public IEnumerable<string> AccountUsers { get; init; } = Enumerable.Empty<string>();
+    public string Id { get; init; } = String.Empty;
 }
 
-public record AccountPaymentTypesResponse
+public record AccountCategory
 {
-    public string AccountId { get; set; } = String.Empty;
-    public string AccountName { get; set; } = String.Empty;
-    public IEnumerable<string> AccountPaymentTypes { get; init; } = Enumerable.Empty<string>();
+    public string Name { get; init; } = String.Empty;
+    // public string? Value { get; init; }
+    // public string? IconRef { get; init; }
 }
 
-public record AccountCategoryRequest
+public record AccountPaymentType
 {
-    public string CategoryName { get; init; } = String.Empty;
-    // public string CategoryIconRef { get; init; } = "unknown";
-    public static CategoryModel ToCategoryModel(AccountCategoryRequest request)
-    {
-        if (String.IsNullOrEmpty(request.CategoryName))
-            throw new RequestException($"Missing category name");
-        return new CategoryModel()
-        {
-            CategoryName = request.CategoryName
-            // CategoryIconRef = request.CategoryIconRef
-        };
-    }
-}
-
-public record AccountCategoriesResponse
-{
-    public string AccountId { get; set; } = String.Empty;
-    public string AccountName { get; set; } = String.Empty;
-    public IEnumerable<string> AccountCategories { get; init; } = Enumerable.Empty<string>();
+    public string Name { get; init; } = String.Empty;
+    // public string? Value { get; init; }
 }

@@ -1,8 +1,9 @@
-namespace AccountyMinAPI.Api;
+using AccountyMinAPI.Api;
+namespace AccountyMinAPI.Config;
 
-public static class Api
+public static class ConfigureRoutes
 {
-    public static void ConfigureApi(this WebApplication app)
+    public static WebApplication UseRoutes(this WebApplication app)
     {
         app.MapGet("/", () => "App is running!");
 
@@ -29,5 +30,7 @@ public static class Api
         app.MapDelete("/accounts/{accountId}", AccountAPI.DeleteAccountById);
 
         app.MapGet("/auth", AuthAPI.AuthUser);
+        
+        return app;
     }
 }

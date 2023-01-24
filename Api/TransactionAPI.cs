@@ -36,9 +36,9 @@ public static class TransactionsAPI
         {
             return Results.Problem(ex.Message);
         }
-        catch (System.Exception ex)
+        catch (Exception)
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Ops unexpeccted behavior");
         }
     }
 
@@ -62,9 +62,9 @@ public static class TransactionsAPI
         {
             return Results.BadRequest(ex.Message);
         }
-        catch (System.Exception ex)
+        catch (Exception)
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Ops unexpeccted behavior");
         }
     }
 
@@ -90,9 +90,9 @@ public static class TransactionsAPI
         {
             return Results.BadRequest(ex.Message);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Ops unexpeccted behavior");
         }
     }
 
@@ -113,9 +113,9 @@ public static class TransactionsAPI
         {
             return Results.BadRequest(ex.Message);
         }
-        catch (System.Exception ex)
+        catch (Exception)
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Ops unexpeccted behavior");
         }
     }
 
@@ -144,9 +144,9 @@ public static class TransactionsAPI
         {
             return Results.Problem(ex.Message);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Ops unexpeccted behavior");
         }
     }
     
@@ -175,9 +175,9 @@ public static class TransactionsAPI
         {
             return Results.Problem(ex.Message);
         }
-        catch (System.Exception ex)
+        catch (Exception)
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Ops unexpeccted behavior");
         }
     }
 
@@ -206,9 +206,9 @@ public static class TransactionsAPI
         {
             return Results.Problem(ex.Message);
         }
-        catch (System.Exception ex)
+        catch (Exception)
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Ops unexpeccted behavior");
         }
     }
     
@@ -237,9 +237,9 @@ public static class TransactionsAPI
         {
             return Results.Problem(ex.Message);
         }
-        catch (System.Exception ex)
+        catch (Exception)
         {
-            return Results.Problem(ex.Message);
+            return Results.Problem("Ops unexpeccted behavior");
         }
     }
 }
