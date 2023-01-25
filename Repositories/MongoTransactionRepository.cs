@@ -28,10 +28,7 @@ public class MongoTransactionRepository : ITransactionRepository
         var filter = filterBuilder.Eq(transaction => transaction.Id, transactionId);
         var deleteResult = await transactionCollection.DeleteOneAsync(filter);
         if (deleteResult.DeletedCount == 0)
-        {
-            // log error
             throw new NotFoundException($"ID - {transactionId} was not found");
-        }
     }
 
     public async Task<TransactionModel> EditTransaction(string transactionId, TransactionModel model)
@@ -50,10 +47,7 @@ public class MongoTransactionRepository : ITransactionRepository
         }
         var patchResult = await transactionCollection.UpdateOneAsync(filter, patchDefinition.Combine(fields));
         if (patchResult.MatchedCount == 0)
-        {
-            // log error
             throw new NotFoundException($"transaction '{transactionId}' not found");
-        }
         TransactionModel updatedModel = await transactionCollection.Find(filter)
             .FirstOrDefaultAsync();
         return updatedModel;
@@ -100,10 +94,7 @@ public class MongoTransactionRepository : ITransactionRepository
         var filter = filterBuilder.Eq(transaction => transaction.Id, transactionId);
         TransactionModel transaction = await transactionCollection.Find(filter).SingleOrDefaultAsync();
         if (transaction is null)
-        {
-            // log error
             throw new NotFoundException($"Transaction id '{transactionId}' not found");
-        }
         return transaction;
     }
 

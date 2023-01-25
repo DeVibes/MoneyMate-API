@@ -7,16 +7,13 @@ public class MongoAccountRepository: IAccountRepository
     private readonly IMongoCollection<AccountModel> accountCollection;
     private readonly FilterDefinitionBuilder<AccountModel> filterBuilder = Builders<AccountModel>.Filter;
     private readonly ProjectionDefinitionBuilder<AccountModel> projectionBuilder = Builders<AccountModel>.Projection;
-    private readonly ILogger<MongoAccountRepository> _logger;
     private readonly int DUPLICATE_FIELD = 11000;
     public MongoAccountRepository(
         IMongoClient mongoClient, 
-        IConfiguration configuration,
-        ILogger<MongoAccountRepository> logger)
+        IConfiguration configuration)
     {
         var database = mongoClient.GetDatabase(configuration["Database:Current"]);
         accountCollection = database.GetCollection<AccountModel>("accounts");
-        _logger = logger;
         CreateUniqueIndexOnField();
     }
 
@@ -33,7 +30,6 @@ public class MongoAccountRepository: IAccountRepository
         }
         catch (MongoWriteException ex)
         {
-            // log error
             if (ex.WriteError.Code == DUPLICATE_FIELD)
                 throw new AlreadyExistsException($"Account name '{account.AccountName}' already exists");
             throw new ServerException($"Failed inserting account name '{account.AccountName}'");
@@ -51,10 +47,7 @@ public class MongoAccountRepository: IAccountRepository
         var filter = filterBuilder.Eq(account => account.Id, accountId);
         AccountModel account = await accountCollection.Find(filter).SingleOrDefaultAsync();
         if (account is null)
-        {
-            _logger.LogError($"Account id '{accountId}' not found");
             throw new NotFoundException($"Account id '{accountId}' not found");
-        }
         return account;
     }
 
@@ -63,11 +56,7 @@ public class MongoAccountRepository: IAccountRepository
         var filter = filterBuilder.Eq(account => account.Id, accountId);
         var deleteResult = await accountCollection.DeleteOneAsync(filter);
         if (deleteResult.DeletedCount == 0)
-        {
-            // log error
-
             throw new NotFoundException($"Account id '{accountId}' not found");
-        }
     }
     
     public async Task<AccountModel> AssignUserToAccount(string accountId, string userId)
@@ -77,15 +66,9 @@ public class MongoAccountRepository: IAccountRepository
             .AddToSet(acc => acc.AccountUsers, userId);
         UpdateResult result = await accountCollection.UpdateOneAsync(filter, updateUsersDefine);
         if (result.MatchedCount == 0)
-        {
-            // log error
             throw new NotFoundException($"Account '{accountId}' not found");
-        }
         if (result.ModifiedCount == 0)
-        {
-            // log error
             throw new AlreadyExistsException($"Account '{accountId}' already has user id '{userId}'");
-        }
         AccountModel updatedAccount = await accountCollection.Find(filter).FirstOrDefaultAsync();
         return updatedAccount;
     }
@@ -167,10 +150,7 @@ public class MongoAccountRepository: IAccountRepository
             .Set(acc => acc.AccountName, accountModel.AccountName);
         UpdateResult result = await accountCollection.UpdateOneAsync(filter, updateAccountDefine);
         if (result.MatchedCount == 0)
-        {
-            // log error
             throw new NotFoundException($"Account '{accountId}' not found");
-        }
         AccountModel updatedModel = await accountCollection.Find(filter)
             .FirstOrDefaultAsync();
         return updatedModel;
