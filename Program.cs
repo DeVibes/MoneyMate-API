@@ -9,6 +9,7 @@ var clientUrl = builder.Configuration["ClientURL"];
 builder.UseLogger();
 
 builder.Services
+    .AddTransient<GlobalExceptionHandlingMiddleware>()
     .RegisterMongoDB(connectionString)
     .AddEndpointsApiExplorer()
     .RegisterDI()
@@ -27,7 +28,7 @@ var app = builder.Build();
 // app.UseCors("MyAllowedOrigins");
 app
     .UseRoutes()
-    // .UseMiddleware<GlobalExceptionHandlingMiddleware>()
+    .UseMiddleware<GlobalExceptionHandlingMiddleware>()
     .UseAuthentication()
     .UseAuthorization()
     .UseHttpsRedirection();
