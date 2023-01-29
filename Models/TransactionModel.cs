@@ -11,7 +11,7 @@ public record TransactionModel
     public string? Description { get; init; } 
     public string? Store { get; init; } 
     public double? Price { get; init; }
-    public DateTime? Date { get; init; }
+    public DateTime? Date { get; set; }
     public string? PaymentType { get; init; }
     public string? Category { get; init; }
     public bool? Seen { get; set; }
@@ -44,7 +44,7 @@ public record TransactionRequest
     public string? Date { get; init; }
     public string? Category { get; init; }
     public string? PaymentType { get; init; }
-    public string? Seen { get; init; }
+    public bool? Seen { get; init; }
     public static TransactionModel ToTransactionModelPatch(TransactionRequest request)
     {
         bool isDateValid = DateTime.TryParse(request.Date, out DateTime date);
@@ -53,11 +53,12 @@ public record TransactionRequest
         bool isPriceValid = Double.TryParse(request.Price, out double price);
         if (request.Price is not null && !isPriceValid)
             throw new RequestException("Invalid price");
-        bool isSeenValid = Boolean.TryParse(request.Seen, out bool seen);
-        if (request.Seen is not null && !isSeenValid)
-            throw new RequestException("Invalid seen");
+        // bool isSeenValid = Boolean.TryParse(request.Seen, out bool seen);
+        // if (request.Seen is not null && !isSeenValid)
+        //     throw new RequestException("Invalid seen");
 
-        price = !request.Category.Equals("income") ? price * -1 : price;
+        if (!String.IsNullOrEmpty(request.Category))
+            price = !request.Category.Equals("income") ? price * -1 : price;
 
         return new()
         {
@@ -67,7 +68,7 @@ public record TransactionRequest
            Store = request.Store,
            Date = isDateValid ? date : null,
            Price = isPriceValid ? price : null,
-           Seen = isSeenValid ? seen : null
+           Seen = request.Seen 
         };
     }
     
@@ -85,9 +86,9 @@ public record TransactionRequest
             throw new RequestException("Missing price");
         if (!isPriceValid)
             throw new RequestException("Invalid price");
-        bool isSeenValid = Boolean.TryParse(request.Seen, out bool seen);
-        if (request.Seen is not null && !isSeenValid)
-            throw new RequestException("Invalid seen");
+        // bool isSeenValid = Boolean.TryParse(request.Seen, out bool seen);
+        // if (request.Seen is not null && !isSeenValid)
+        //     throw new RequestException("Invalid seen");
         if (String.IsNullOrEmpty(request.Category))
             throw new RequestException("Missing category");
         if (String.IsNullOrEmpty(request.PaymentType))
@@ -104,7 +105,7 @@ public record TransactionRequest
            Store = request.Store ?? String.Empty,
            Date = date,
            Price = price,
-           Seen = isSeenValid ? seen : false
+           Seen = request.Seen ?? false
         };
     }
 }

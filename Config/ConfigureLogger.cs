@@ -15,6 +15,7 @@ public static class ConfigureLogger
             configuration
                 .WriteTo.File("Log/serilog-file.txt")
                 .WriteTo.File("Log/serilog-errors.txt", LogEventLevel.Error)
+                .WriteTo.File("Log/serilog-info.txt", LogEventLevel.Debug)
                 .WriteTo.Console(new CompactJsonFormatter());
         });
         return builder;

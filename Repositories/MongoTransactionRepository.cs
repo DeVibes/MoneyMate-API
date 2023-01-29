@@ -5,6 +5,18 @@ using System.Reflection;
 
 namespace AccountyMinAPI.Repositories;
 
+public static class NewBaseType
+{
+    public static int GetCustomMonth(DateTime date)
+    {
+        var month = date.Day >= 11 ?
+            (date.Month == 12 ? 1 : date.Month + 1) : date.Month;
+        if (date.Month == 12 && date.Day >= 11)
+            return 1;
+        return month;
+    }
+}
+
 public class MongoTransactionRepository : ITransactionRepository
 {
     private readonly IMongoCollection<TransactionModel> transactionCollection;
@@ -141,25 +153,51 @@ public class MongoTransactionRepository : ITransactionRepository
             filterBuilder.Ne(x => x.Category, "income"));
         filter &= yearlyNonIncomefilter;
 
-        var yearlyTransactions = await transactionCollection.Aggregate()
-            .Match(filter)
-            .Group(
-                x => new DateTime(x.Date.Value.Year, x.Date.Value.Month, 1),
-                group => new 
-                {
-                    Date = group.Key,
-                    Total = group.Sum(x => x.Price)
-                })
-            .Project(g => new YearlySummaryModel
+        var yearlyTransactions = await transactionCollection.Find(filter).ToListAsync();
+
+        //TODO The following logic must be done my mongo driver
+        List<YearlySummaryModel> yearlyTransactionsMapped = yearlyTransactions.GroupBy(tr => 
+        {
+            var customMonth = tr.Date.Value.Month;
+            var customYear = tr.Date.Value.Year;
+
+            if (tr.Date.Value.Day < 11)
             {
-                Total = g.Total.Value,
-                Month = g.Date.Month,
-                Year = g.Date.Year
-            })
-            .SortBy(item => item.Year)
-            .ThenBy(item => item.Month)
-            .ToListAsync();
-        return yearlyTransactions;
+                customMonth--;
+                if (customMonth == 0)
+                {
+                    customMonth = 12;
+                    customYear--;
+                }
+            }
+            return new { Year = customYear, Month = customMonth };
+        }).Select(x => new YearlySummaryModel()
+        {
+            Year = x.Key.Year,
+            Month = x.Key.Month,
+            Total = x.Sum(y => y.Price.Value)
+        }).ToList();
+        return yearlyTransactionsMapped;
+
+            // Saving for reference
+            // var yearlyTransactions = await transactionCollection.Aggregate()
+            // .Group(
+            //     x => new DateTime(x.Date.Value.Year, NewBaseType.GetCustomMonth(x.Date.Value), 1),
+            //     group => new 
+            //     {
+            //         Date = group.Key,
+            //         Total = group.Sum(x => x.Price)
+            //     })
+            // .Project(g => new YearlySummaryModel
+            // {
+            //     Total = g.Total.Value,
+            //     Month = g.Date.Month,
+            //     Year = g.Date.Year
+            // })
+            // .SortBy(item => item.Year)
+            // .ThenBy(item => item.Month)
+            // .ToListAsync();
+        // return yearlyTransactions;
     }
 
     public async Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters)

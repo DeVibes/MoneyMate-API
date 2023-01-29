@@ -15,34 +15,21 @@ builder.Services
     .RegisterDI()
     .RegisterAuth();
 
-// builder.Services.AddCors(options => options.AddPolicy("MyAllowedOrigins",
-//     policy =>
-//     {
-//         policy.WithOrigins(clientUrl)
-//             .AllowAnyHeader()
-//             .AllowAnyMethod();
-//     })
-// );
+builder.Services.AddCors(options => options.AddPolicy("MyAllowedOrigins",
+    policy =>
+    {
+        policy.WithOrigins(clientUrl)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    })
+);
 
 var app = builder.Build();
-// app.UseCors("MyAllowedOrigins");
+app.UseCors("MyAllowedOrigins");
 app
     .UseRoutes()
     .UseMiddleware<GlobalExceptionHandlingMiddleware>()
     .UseAuthentication()
     .UseAuthorization()
     .UseHttpsRedirection();
-
-// app.Use(async (context, next) => 
-// {
-//     try
-//     {
-//         await next(context);
-//     }
-//     catch (Exception ex)
-//     {
-//         context.Response.StatusCode = 500;
-//     }
-// });
-
 app.Run();

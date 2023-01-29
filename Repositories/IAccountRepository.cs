@@ -15,4 +15,5 @@ public interface IAccountRepository
     Task<AccountModel> EditAccount(string accountId, AccountModel accountModel);
     Task ValidateTransactionData(string accountId, TransactionModel model);
     Task<IEnumerable<string>> GetAccountUsers(string accountId);
+    Task<IEnumerable<string>> GetUserAccounts(string username);
 }

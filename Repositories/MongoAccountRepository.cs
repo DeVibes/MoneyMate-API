@@ -200,6 +200,19 @@ public class MongoAccountRepository: IAccountRepository
         return users is null ? Enumerable.Empty<string>() : users;
     }
 
+    public async Task<IEnumerable<string>> GetUserAccounts(string username)
+    {
+        var accountHasUsername = filterBuilder.AnyEq(acc => acc.AccountUsers, username);
+        var stringProjection = projectionBuilder.Expression(acc => acc.Id);
+        IEnumerable<string>? linkedAccounts = await accountCollection
+            .Find(accountHasUsername)
+            .Project(stringProjection)
+            .ToListAsync();
+        if (linkedAccounts is null)
+            throw new NotFoundException($"No account found that is linkedd to user ${username}");
+        return linkedAccounts;
+    }
+
     private void CreateUniqueIndexOnField()
     {
         CreateIndexModel<AccountModel> indexModel = new(

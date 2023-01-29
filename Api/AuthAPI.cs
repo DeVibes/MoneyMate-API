@@ -10,7 +10,8 @@ public static class AuthAPI
     public static async Task<IResult> AuthUser(
         HttpRequest request, 
         TokenService service, 
-        IUsernameRepository usernameRepository)
+        IUsernameRepository usernameRepository,
+        IAccountRepository accountRepository)
     {
         string? gToken = RequestHelper.GetBearerToken(request);
         string requestUrl = $"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={gToken}";
@@ -29,6 +30,7 @@ public static class AuthAPI
         if (String.IsNullOrEmpty(username) || !isUsernameAllowed)
             return Results.Unauthorized();
         var token = service.GenerateToken(username);
-        return Results.Ok(new { token = token });
+        IEnumerable<string> userAccounts = await accountRepository.GetUserAccounts(username);
+        return Results.Ok(new { token = token, accounts = userAccounts });
     }
 } 
