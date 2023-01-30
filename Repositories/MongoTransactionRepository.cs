@@ -208,14 +208,13 @@ public class MongoTransactionRepository : ITransactionRepository
         var dateNonIncomefilter = filterBuilder.And(
             filterBuilder.Gte(x => x.Date, filters.FromDate),
             filterBuilder.Lte(x => x.Date, filters.ToDate),
-            filterBuilder.In("LinkedUserId", filters.Users),
-            filterBuilder.Ne(x => x.Category, "income"));
+            filterBuilder.In("LinkedUserId", filters.Users));
         filter &= dateNonIncomefilter;
 
         var categoriesedTransactions = await transactionCollection.Aggregate()
             .Match(filter)
             .Group(
-                x => x.Category == "income" ? "income" : "monthlySpent",
+                x => x.Category == "Income" ? "income" : "monthlySpent",
                 group => new
                 {
                     Category = group.Key,
