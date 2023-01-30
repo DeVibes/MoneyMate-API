@@ -16,6 +16,7 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
     {
         try
         {
+            _logger.LogInformation($"Starting request");
             await next(context); 
         }
         catch (UserException ex)

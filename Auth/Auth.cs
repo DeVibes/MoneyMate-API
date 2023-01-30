@@ -4,9 +4,8 @@ using Microsoft.Extensions.Primitives;
 namespace AccountyMinAPI.Auth;
 public static class AuthSecret
 {
-    public static string SecretKey = "6ceccd7405ef4b00b2630009be568cfa";
-    public static byte[] GenerateSecretByte() => 
-        Encoding.ASCII.GetBytes(SecretKey);
+    public static byte[] GenerateSecretByte(string secretKey) => 
+        Encoding.ASCII.GetBytes(secretKey);
 }
 
 public struct APIRoles

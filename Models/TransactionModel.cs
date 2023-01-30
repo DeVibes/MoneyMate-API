@@ -58,7 +58,7 @@ public record TransactionRequest
         //     throw new RequestException("Invalid seen");
 
         if (!String.IsNullOrEmpty(request.Category))
-            price = !request.Category.Equals("income") ? price * -1 : price;
+            price = !request.Category.Equals("Income") ? price * -1 : price;
 
         return new()
         {
@@ -94,7 +94,7 @@ public record TransactionRequest
         if (String.IsNullOrEmpty(request.PaymentType))
             throw new RequestException("Missing payment type");
 
-        price = !request.Category.Equals("income") ? price * -1 : price;
+        price = !request.Category.Equals("Income") ? price * -1 : price;
 
         return new()
         {

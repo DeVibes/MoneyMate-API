@@ -4,6 +4,7 @@ using AccountyMinAPI.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("MongoConnectionString");
+var appSecret = builder.Configuration["AppSecret"];
 var clientUrl = builder.Configuration["ClientURL"];
 
 builder.UseLogger();
@@ -13,7 +14,7 @@ builder.Services
     .RegisterMongoDB(connectionString)
     .AddEndpointsApiExplorer()
     .RegisterDI()
-    .RegisterAuth();
+    .RegisterAuth(appSecret);
 
 builder.Services.AddCors(options => options.AddPolicy("MyAllowedOrigins",
     policy =>

@@ -6,9 +6,9 @@ namespace AccountyMinAPI.Config;
 
 public static class ConfigureAuth
 {
-    public static IServiceCollection RegisterAuth(this IServiceCollection services)
+    public static IServiceCollection RegisterAuth(this IServiceCollection services, string secret)
     {
-        var secretKey = AuthSecret.GenerateSecretByte();
+        var secretKey = AuthSecret.GenerateSecretByte(secret);
         services
             .AddAuthentication(config =>
             {

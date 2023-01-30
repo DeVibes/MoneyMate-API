@@ -5,11 +5,11 @@ using Microsoft.IdentityModel.Tokens;
 namespace AccountyMinAPI.Auth;
 public class TokenService
 {
-    internal string GenerateToken(string username)
+    internal string GenerateToken(string username, string secret)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var key = AuthSecret.GenerateSecretByte();
+        var key = AuthSecret.GenerateSecretByte(secret);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
