@@ -125,7 +125,7 @@ public class MongoTransactionRepository : ITransactionRepository
             filterBuilder.Gte(x => x.Date, filters.FromDate),
             filterBuilder.Lte(x => x.Date, filters.ToDate),
             filterBuilder.In("LinkedUserId", filters.Users),
-            filterBuilder.Ne(x => x.Category, "income"));
+            filterBuilder.Ne(x => x.Category, "Income"));
         filter &= monthlyNonIncomefilter;
 
         var categoriesedTransactions = await transactionCollection.Aggregate()
