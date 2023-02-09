@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace AccountyMinAPI.Auth;
 public class TokenService
 {
-    internal string GenerateToken(string username, string secret)
+    internal string GenerateToken(string username, string secret, string userRole)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
@@ -16,7 +16,7 @@ public class TokenService
             Subject = new ClaimsIdentity(new Claim[]
             {
                 new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, APIRoles.User)
+                new Claim(ClaimTypes.Role, userRole)
             }),
             Expires = DateTime.UtcNow.AddMinutes(30),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

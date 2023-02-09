@@ -25,7 +25,7 @@ public class MongoAccountRepository: IAccountRepository
             var createdAccountFilter = filterBuilder.Eq(acc => acc.AccountName, account.AccountName);
             var createdAccount = await accountCollection.Find(createdAccountFilter).FirstOrDefaultAsync();
             if (createdAccount == null)
-                throw new ServerException($"Failed insertinginserting account name '{account.AccountName}'");
+                throw new ServerException($"Failed inserting account name '{account.AccountName}'");
             return createdAccount;
         }
         catch (MongoWriteException ex)
@@ -59,30 +59,30 @@ public class MongoAccountRepository: IAccountRepository
             throw new NotFoundException($"Account id '{accountId}' not found");
     }
     
-    public async Task<AccountModel> AssignUserToAccount(string accountId, string userId)
+    public async Task<AccountModel> AssignUserToAccount(string accountId, UserModel user)
     {
         var filter = filterBuilder.Eq(account => account.Id, accountId);
         var updateUsersDefine = Builders<AccountModel>.Update
-            .AddToSet(acc => acc.AccountUsers, userId);
+            .AddToSet(acc => acc.AccountUsers, user);
         UpdateResult result = await accountCollection.UpdateOneAsync(filter, updateUsersDefine);
         if (result.MatchedCount == 0)
             throw new NotFoundException($"Account '{accountId}' not found");
         if (result.ModifiedCount == 0)
-            throw new AlreadyExistsException($"Account '{accountId}' already has user id '{userId}'");
+            throw new AlreadyExistsException($"Account '{accountId}' already has username '{user.Username}'");
         AccountModel updatedAccount = await accountCollection.Find(filter).FirstOrDefaultAsync();
         return updatedAccount;
     }
 
-    public async Task<AccountModel> DeassignUserToAccount(string accountId, string userId)
+    public async Task<AccountModel> DeassignUserToAccount(string accountId, UserModel user)
     {
         var filter = filterBuilder.Eq(account => account.Id, accountId);
         var updateUsersDefine = Builders<AccountModel>.Update
-            .Pull(acc => acc.AccountUsers, userId);
+            .Pull(acc => acc.AccountUsers, user);
         UpdateResult result = await accountCollection.UpdateOneAsync(filter, updateUsersDefine);
         if (result.MatchedCount == 0)
             throw new NotFoundException($"Account '{accountId}' not found");
         if (result.ModifiedCount == 0)
-            throw new NotFoundException($"Account '{accountId}' doesnt have user id '{userId}'");
+            throw new NotFoundException($"Account '{accountId}' doesnt have username '{user.Username}'");
         AccountModel updatedModel = await accountCollection.Find(filter).FirstOrDefaultAsync();
         return updatedModel;
     }
@@ -161,7 +161,7 @@ public class MongoAccountRepository: IAccountRepository
         if (!String.IsNullOrEmpty(model.LinkedUserId))
         {
             var userfilter = filterBuilder.Eq(account => account.Id, accountId) &
-                filterBuilder.Where(acc => acc.AccountUsers.Contains(model.LinkedUserId));
+                filterBuilder.Where(acc => acc.AccountUsers.Select(a => a.Username).Contains(model.LinkedUserId));
             var result = await accountCollection.Find(userfilter).FirstOrDefaultAsync();
             if (result is null)
                 throw new RequestException($"Account '{accountId}' and user '{model.LinkedUserId}' are not linked");
@@ -186,31 +186,33 @@ public class MongoAccountRepository: IAccountRepository
 
 
 
-    public async Task<IEnumerable<string>> GetAccountUsers(string accountId)
+    public async Task<IEnumerable<UserModel>> GetAccountUsers(string accountId)
     {
         var accountFilter = filterBuilder.Eq(acc => acc.Id, accountId);
         var usersProjection = projectionBuilder
             .Expression(acc => acc.AccountUsers);
             
-        IEnumerable<string>? users = await accountCollection
+        IEnumerable<UserModel>? users = await accountCollection
             .Find(accountFilter)
             .Project(usersProjection)
             .FirstOrDefaultAsync();
 
-        return users is null ? Enumerable.Empty<string>() : users;
+        return users is null ? Enumerable.Empty<UserModel>() : users;
     }
 
-    public async Task<IEnumerable<string>> GetUserAccounts(string username)
+    public async Task<Tuple<string, string>> GetUserAccountAndRole(string username)
     {
-        var accountHasUsername = filterBuilder.AnyEq(acc => acc.AccountUsers, username);
-        var stringProjection = projectionBuilder.Expression(acc => acc.Id);
-        IEnumerable<string>? linkedAccounts = await accountCollection
-            .Find(accountHasUsername)
+        // var accountHasUsername = filterBuilder.AnyEq(acc => acc.AccountUsers.Select(a => a.Username), username);
+        // IEnumerable<Tuple<string, string>>? linkedAccounts = await accountCollection
+        var accountHasUsernameFilter = filterBuilder.ElemMatch("AccountUsers", 
+            Builders<UserModel>.Filter.Eq("Username", username));
+        var stringProjection = projectionBuilder.Expression(acc => Tuple.Create(acc.Id, acc.AccountUsers
+            .Where(u => u.Username == username).FirstOrDefault().Role));
+        var linkedAccounts = await accountCollection
+            .Find(accountHasUsernameFilter)
             .Project(stringProjection)
             .ToListAsync();
-        if (linkedAccounts is null)
-            throw new NotFoundException($"No account found that is linkedd to user ${username}");
-        return linkedAccounts;
+        return linkedAccounts.FirstOrDefault();
     }
 
     private void CreateUniqueIndexOnField()

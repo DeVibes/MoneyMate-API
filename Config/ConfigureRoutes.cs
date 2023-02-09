@@ -22,9 +22,9 @@ public static class ConfigureRoutes
         // Map /accounts endpoints
         app.MapGet("/accounts", AccountAPI.GetAccounts).RequireAuthorization(APIRoles.User);
         app.MapGet("/accounts/{accountId}", AccountAPI.GetAccountById).RequireAuthorization(APIRoles.User);
-        app.MapPost("/accounts", AccountAPI.CreateAccount).RequireAuthorization(APIRoles.User);
-        app.MapPost("/accounts/{accountId}/users", AccountAPI.AssignUserToAccount).RequireAuthorization(APIRoles.User);
-        app.MapPost("/accounts/{accountId}/payments", AccountAPI.AssignPaymentTypeToAccount).RequireAuthorization(APIRoles.User);
+        app.MapPost("/accounts", AccountAPI.CreateAccount).RequireAuthorization(APIRoles.Admin);
+        app.MapPost("/accounts/{accountId}/users", AccountAPI.AssignUserToAccount).RequireAuthorization(APIRoles.Admin);
+        app.MapPost("/accounts/{accountId}/payments", AccountAPI.AssignPaymentTypeToAccount).RequireAuthorization(APIRoles.Admin);
         app.MapPost("/accounts/{accountId}/categories", AccountAPI.AddCategoryToAccount).RequireAuthorization(APIRoles.User);
         app.MapMethods("/accounts/{accountId}", new[] { "PATCH" }, AccountAPI.PatchAccountById).RequireAuthorization(APIRoles.User);
         app.MapDelete("/accounts/{accountId}/users", AccountAPI.DeassignUserFromAccount).RequireAuthorization(APIRoles.User);

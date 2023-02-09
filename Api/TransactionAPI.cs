@@ -12,9 +12,9 @@ public static class TransactionsAPI
     {
         if (String.IsNullOrEmpty(accountId))
             throw new RequestException("Account id missing");
-        IEnumerable<string> accountUsers = await accountRepository.GetAccountUsers(accountId);
+        IEnumerable<UserModel> accountUsers = await accountRepository.GetAccountUsers(accountId);
         TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
-        filters.Users = accountUsers;
+        filters.Users = accountUsers.Select(a => a.Username);
         var (count, transactions) = await transactionRepository.GetAllTransactions(filters);
         List<TransactionResponse> transactionsPayload = transactions
             .Select(TransactionModel.ToTransactionResponse)
@@ -78,9 +78,9 @@ public static class TransactionsAPI
     {
         if (String.IsNullOrEmpty(accountId))
             throw new RequestException("Account id missing");
-        IEnumerable<string> accountUsers = await accountRepository.GetAccountUsers(accountId);
+        IEnumerable<UserModel> accountUsers = await accountRepository.GetAccountUsers(accountId);
         TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
-        filters.Users = accountUsers;
+        filters.Users = accountUsers.Select(a => a.Username);
         IEnumerable<MonthlyCategorySummaryModel> monthSummary = await transactionRepository.GetMonthlySummary(filters);
         IEnumerable<MonthlyCategorySummaryResponse> payload = monthSummary.Select(MonthlyCategorySummaryModel.ToResponse);
         return Results.Ok(payload);
@@ -94,9 +94,9 @@ public static class TransactionsAPI
     {
         if (String.IsNullOrEmpty(accountId))
             throw new RequestException("Account id missing");
-        IEnumerable<string> accountUsers = await accountRepository.GetAccountUsers(accountId);
+        IEnumerable<UserModel> accountUsers = await accountRepository.GetAccountUsers(accountId);
         TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
-        filters.Users = accountUsers;
+        filters.Users = accountUsers.Select(a => a.Username);
         IEnumerable<YearlySummaryModel> yearlySummary = await transactionRepository.GetYearlySumByMonth(filters);
         IEnumerable<YearlySummaryResponse> payload = yearlySummary.Select(YearlySummaryModel.ToResponse);
         return Results.Ok(payload);
@@ -110,9 +110,9 @@ public static class TransactionsAPI
     {
         if (String.IsNullOrEmpty(accountId))
             throw new RequestException("Account id missing");
-        IEnumerable<string> accountUsers = await accountRepository.GetAccountUsers(accountId);
+        IEnumerable<UserModel> accountUsers = await accountRepository.GetAccountUsers(accountId);
         TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
-        filters.Users = accountUsers;
+        filters.Users = accountUsers.Select(a => a.Username);
         BalanceModel monthlyBalance = await transactionRepository.GetMonthlyBalance(filters);
         BalanceResponse payload = BalanceModel.ToResponse(monthlyBalance);
         return Results.Ok(payload);

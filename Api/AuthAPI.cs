@@ -31,8 +31,11 @@ public static class AuthAPI
         var isUsernameAllowed = await usernameRepository.IsUsernameAllowed(username);
         if (String.IsNullOrEmpty(username) || !isUsernameAllowed)
             return Results.Unauthorized();
-        var token = service.GenerateToken(username, secret);
-        IEnumerable<string> userAccounts = await accountRepository.GetUserAccounts(username);
-        return Results.Ok(new { token = token, accounts = userAccounts });
+
+        Tuple<string, string> userAccountAndRole = await accountRepository.GetUserAccountAndRole(username);
+        if (userAccountAndRole is null)
+            throw new NotFoundException($"No account found that is linked to user ${username}");
+        var token = service.GenerateToken(username, secret, userAccountAndRole.Item2);
+        return Results.Ok(new { token = token, account = userAccountAndRole.Item1, userRole = userAccountAndRole.Item2 });
     }
 } 

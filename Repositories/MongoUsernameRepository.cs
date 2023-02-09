@@ -3,13 +3,13 @@ using MongoDB.Driver;
 namespace AccountyMinAPI.Repositories;
 public class MongoUsernameRepository : IUsernameRepository
 {
-    private readonly IMongoCollection<UsernameModel> allowedUserCollection;
-    private readonly FilterDefinitionBuilder<UsernameModel> filterBuilder = 
-        Builders<UsernameModel>.Filter;
+    private readonly IMongoCollection<UserModel> allowedUserCollection;
+    private readonly FilterDefinitionBuilder<UserModel> filterBuilder = 
+        Builders<UserModel>.Filter;
     public MongoUsernameRepository(IMongoClient mongoClient, IConfiguration configuration)
     {
         var database = mongoClient.GetDatabase(configuration["Database:current"]);
-        allowedUserCollection = database.GetCollection<UsernameModel>("allowedUsers");
+        allowedUserCollection = database.GetCollection<UserModel>("allowedUsers");
     }
     public async Task<bool> IsUsernameAllowed(string username)
     {

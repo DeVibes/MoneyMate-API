@@ -31,7 +31,7 @@ public static class ConfigureAuth
         services.AddAuthorization(options =>
         {
             options.AddPolicy(APIRoles.Admin, policy => policy.RequireRole(APIRoles.Admin));
-            options.AddPolicy(APIRoles.User, policy => policy.RequireRole(APIRoles.User));
+            options.AddPolicy(APIRoles.User, policy => policy.RequireRole(APIRoles.Admin, APIRoles.User));
         });
         return services;
     }

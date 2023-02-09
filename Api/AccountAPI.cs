@@ -31,20 +31,23 @@ public static class AccountAPI
         return Results.Ok(payload);
     }
 
-    public static async Task<IResult> AssignUserToAccount(string accountId, [FromBody]AccountUser requestBody, IAccountRepository repository)
+    public static async Task<IResult> AssignUserToAccount(string accountId, [FromBody]UserModel requestBody, IAccountRepository repository)
     {
-        if(string.IsNullOrEmpty(requestBody.Id))
+        if(string.IsNullOrEmpty(requestBody.Username))
             throw new RequestException("Missing user");
-        AccountModel updatedAccount = await repository.AssignUserToAccount(accountId, requestBody.Id);
+        Tuple<string, string> accountAndRole = await repository.GetUserAccountAndRole(requestBody.Username);
+        if (accountAndRole is not null)
+            throw new RequestException($"Username {requestBody.Username} already assigned to another account");
+        AccountModel updatedAccount = await repository.AssignUserToAccount(accountId, requestBody);
         AccountResponse payload = AccountModel.ToAccountResponse(updatedAccount);
         return Results.Ok(payload);
     }
 
-    public static async Task<IResult> DeassignUserFromAccount(string accountId, [FromBody]AccountUser requestBody, IAccountRepository repository)
+    public static async Task<IResult> DeassignUserFromAccount(string accountId, [FromBody]UserModel requestBody, IAccountRepository repository)
     {
-        if(string.IsNullOrEmpty(requestBody.Id))
+        if(string.IsNullOrEmpty(requestBody.Username))
             throw new RequestException("Missing user");
-        AccountModel updatedAccount = await repository.DeassignUserToAccount(accountId, requestBody.Id);
+        AccountModel updatedAccount = await repository.DeassignUserToAccount(accountId, requestBody);
         AccountResponse payload =  AccountModel.ToAccountResponse(updatedAccount);
         return Results.Ok(payload);
     }
