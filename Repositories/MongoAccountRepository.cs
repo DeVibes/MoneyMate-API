@@ -160,9 +160,11 @@ public class MongoAccountRepository: IAccountRepository
     {
         if (!String.IsNullOrEmpty(model.LinkedUserId))
         {
-            var userfilter = filterBuilder.Eq(account => account.Id, accountId) &
-                filterBuilder.Where(acc => acc.AccountUsers.Select(a => a.Username).Contains(model.LinkedUserId));
-            var result = await accountCollection.Find(userfilter).FirstOrDefaultAsync();
+            var accountFilter = filterBuilder.Eq(account => account.Id, accountId);
+            var usernameFilter = Builders<UserModel>.Filter.Eq(doc => doc.Username, model.LinkedUserId);
+            var accountAndUsernameFIlter = accountFilter & 
+                filterBuilder.ElemMatch(acc => acc.AccountUsers, usernameFilter);
+            var result = await accountCollection.Find(accountAndUsernameFIlter).FirstOrDefaultAsync();
             if (result is null)
                 throw new RequestException($"Account '{accountId}' and user '{model.LinkedUserId}' are not linked");
         }
