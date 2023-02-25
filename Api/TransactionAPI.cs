@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace AccountyMinAPI.Api;
 
@@ -82,8 +83,15 @@ public static class TransactionsAPI
         TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
         filters.Users = accountUsers.Select(a => a.Username);
         IEnumerable<MonthlyCategorySummaryModel> monthSummary = await transactionRepository.GetMonthlySummary(filters);
-        IEnumerable<MonthlyCategorySummaryResponse> payload = monthSummary.Select(MonthlyCategorySummaryModel.ToResponse);
-        return Results.Ok(payload);
+        var result = monthSummary.ToLookup(categoryDetail => categoryDetail.Category == "Income");
+        BalanceResponse payload = new()
+        {
+            CategoriesDetails = monthSummary.Where(x => x.Category != "Income").ToList(),
+            Income = result[true].Sum(x => x.Total),
+            Outcome = result[false].Sum(x => x.Total)
+        };
+        string payloadJson = JsonConvert.SerializeObject(payload);
+        return Results.Ok(payloadJson);
     }
 
     public static async Task<IResult> GetYearlySumByMonth(
@@ -99,22 +107,6 @@ public static class TransactionsAPI
         filters.Users = accountUsers.Select(a => a.Username);
         IEnumerable<YearlySummaryModel> yearlySummary = await transactionRepository.GetYearlySumByMonth(filters);
         IEnumerable<YearlySummaryResponse> payload = yearlySummary.Select(YearlySummaryModel.ToResponse);
-        return Results.Ok(payload);
-    }
-    
-    public static async Task<IResult> GetAccountBalance(
-        string accountId,
-        IAccountRepository accountRepository,
-        ITransactionRepository transactionRepository, 
-        HttpRequest request)
-    {
-        if (String.IsNullOrEmpty(accountId))
-            throw new RequestException("Account id missing");
-        IEnumerable<UserModel> accountUsers = await accountRepository.GetAccountUsers(accountId);
-        TransactionsFilters filters = TransactionsFilters.ReadFiltersFromQuery(request);
-        filters.Users = accountUsers.Select(a => a.Username);
-        BalanceModel monthlyBalance = await transactionRepository.GetMonthlyBalance(filters);
-        BalanceResponse payload = BalanceModel.ToResponse(monthlyBalance);
         return Results.Ok(payload);
     }
 }

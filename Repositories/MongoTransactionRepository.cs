@@ -124,8 +124,7 @@ public class MongoTransactionRepository : ITransactionRepository
         var monthlyNonIncomefilter = filterBuilder.And(
             filterBuilder.Gte(x => x.Date, filters.FromDate),
             filterBuilder.Lte(x => x.Date, filters.ToDate),
-            filterBuilder.In("LinkedUserId", filters.Users),
-            filterBuilder.Ne(x => x.Category, "Income"));
+            filterBuilder.In("LinkedUserId", filters.Users));
         filter &= monthlyNonIncomefilter;
 
         var categoriesedTransactions = await transactionCollection.Aggregate()
@@ -198,39 +197,5 @@ public class MongoTransactionRepository : ITransactionRepository
             // .ThenBy(item => item.Month)
             // .ToListAsync();
         // return yearlyTransactions;
-    }
-
-    public async Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters)
-    {
-        if (filters.Users == Enumerable.Empty<string>())
-            return new();
-        var filter = filterBuilder.Empty;
-        var dateNonIncomefilter = filterBuilder.And(
-            filterBuilder.Gte(x => x.Date, filters.FromDate),
-            filterBuilder.Lte(x => x.Date, filters.ToDate),
-            filterBuilder.In("LinkedUserId", filters.Users));
-        filter &= dateNonIncomefilter;
-
-        var categoriesedTransactions = await transactionCollection.Aggregate()
-            .Match(filter)
-            .Group(
-                x => x.Category == "Income" ? "income" : "monthlySpent",
-                group => new
-                {
-                    Category = group.Key,
-                    Total = group.Sum(x => x.Price)
-                })
-            .ToListAsync();
-
-        var income = categoriesedTransactions.Where(x => x.Category == "income");
-        var outcomes = categoriesedTransactions.Where(x => x.Category == "monthlySpent");
-        
-        return new BalanceModel()
-        {
-            Income = income.Count() == 0 ? 0 : income.First().Total.Value,
-            Outcome = outcomes.Count() == 0 ? 0 : outcomes.First().Total.Value,
-            FromDate = filters.FromDate,
-            ToDate = filters.ToDate
-        };
     }
 }

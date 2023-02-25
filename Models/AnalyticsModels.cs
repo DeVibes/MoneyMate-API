@@ -51,30 +51,11 @@ public record YearlySummaryResponse
     public string Total { get; set; } = String.Empty;
 }
 
-public record BalanceModel
-{
-    public double Income { get; set; }
-    public double Outcome { get; set; }
-    public DateTime FromDate { get; set; }
-    public DateTime ToDate { get; set; }
-    public static BalanceResponse ToResponse(BalanceModel model)
-    {
-        if (model is null)
-            throw new ServerException($"Error in mapping {nameof(model)} to {nameof(BalanceModel)}");
-        return new()
-        {
-            FromDateString = model.FromDate.ToString("o"),
-            ToDateString = model.ToDate.ToString("o"),
-            Income = model.Income.ToString(),
-            Outcome = model.Outcome.ToString()
-        };
-    }
-}
-
 public record BalanceResponse
 {
-    public string Income { get; set; } = String.Empty;
-    public string Outcome { get; set; } = String.Empty;
+    public double Income { get; set; } = 0;
+    public double Outcome { get; set; } = 0;
+    public IEnumerable<MonthlyCategorySummaryModel> CategoriesDetails = Enumerable.Empty<MonthlyCategorySummaryModel>();
     public string FromDateString { get; set; } = String.Empty;
     public string ToDateString { get; set; } = String.Empty;
 }

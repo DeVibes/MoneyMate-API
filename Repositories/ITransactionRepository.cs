@@ -9,5 +9,4 @@ public interface ITransactionRepository
     Task<TransactionModel> EditTransaction(string transactionId, TransactionModel model);
     Task<IEnumerable<MonthlyCategorySummaryModel>> GetMonthlySummary(TransactionsFilters filters);
     Task<IEnumerable<YearlySummaryModel>> GetYearlySumByMonth(TransactionsFilters filters);
-    Task<BalanceModel> GetMonthlyBalance(TransactionsFilters filters);
 }
